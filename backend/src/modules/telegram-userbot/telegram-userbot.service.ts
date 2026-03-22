@@ -166,20 +166,28 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       const groups = dialogs
         .filter((d: any) => d.isGroup || d.isChannel)
         .map((d: any) => {
-          // Telegram kanal/supergroup ID: -100 prefix kerak
           let chatId = d.id?.toString() || '';
           const entity = d.entity as any;
-          if (entity?.className === 'Channel' || entity?.className === 'ChannelForbidden') {
+          const className = entity?.className || '';
+
+          // Channel va supergroup uchun -100 prefix
+          if (className === 'Channel' || className === 'ChannelForbidden') {
             chatId = `-100${entity.id}`;
-          } else if (entity?.className === 'Chat') {
+          } else if (className === 'Chat' || className === 'ChatForbidden') {
             chatId = `-${entity.id}`;
           }
+
+          // megagroup = supergroup (guruh), broadcast = kanal
+          const isSupergroup = !!(entity?.megagroup);
+          const isBroadcast = !!(entity?.broadcast);
+          const isBasicGroup = className === 'Chat';
 
           return {
             id: chatId,
             title: d.title || d.name || 'Nomsiz',
-            isGroup: d.isGroup || false,
-            isChannel: d.isChannel || false,
+            isGroup: isBasicGroup || isSupergroup,
+            isChannel: isBroadcast,
+            type: isBroadcast ? 'Kanal' : isSupergroup ? 'Supergroup' : isBasicGroup ? 'Guruh' : 'Noma\'lum',
             participantsCount: entity?.participantsCount || 0,
             username: entity?.username || null,
           };

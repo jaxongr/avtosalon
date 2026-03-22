@@ -158,7 +158,7 @@ export default function TelegramPage() {
                 pagination={{ pageSize: 10 }}
                 columns={[
                   { title: 'Nomi', dataIndex: 'title' },
-                  { title: 'Turi', render: (_: any, r: any) => <Tag>{r.isChannel ? 'Kanal' : 'Guruh'}</Tag>, width: 80 },
+                  { title: 'Turi', dataIndex: 'type', render: (v: string) => <Tag color={v === 'Kanal' ? 'blue' : v === 'Supergroup' ? 'purple' : 'green'}>{v}</Tag>, width: 100 },
                   { title: 'A\'zolar', dataIndex: 'participantsCount', width: 80 },
                   {
                     title: '', width: 100,
