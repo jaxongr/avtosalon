@@ -23,6 +23,7 @@ import { CallbackRequestsModule } from './modules/callback-requests/callback-req
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
       serveRoot: '/uploads',
+      exclude: ['/api/(.*)'],
     }),
     PrismaModule,
     AuthModule,
