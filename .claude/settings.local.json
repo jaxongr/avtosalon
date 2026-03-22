@@ -15,7 +15,11 @@
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'cat /etc/nginx/sites-enabled/* 2>/dev/null | grep -E \\\\\"listen|server_name|proxy_pass\\\\\" && echo --- && ss -tlnp | grep -E \\\\\"3000|3001|3002|3003|3004|3005|4000|4001|5000|5173\\\\\"'\" 2>&1)",
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'ss -tlnp 2>/dev/null | head -20'\" 2>&1)",
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\pscp.exe' -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' 'D:\\\\Loyixalar\\\\Avtosalon\\\\deploy\\\\setup.sh' root@5.189.141.151:/root/avtosalon-setup.sh\" 2>&1)",
-      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'grep requirepass /etc/redis/redis.conf 2>/dev/null'\" 2>&1)"
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'grep requirepass /etc/redis/redis.conf 2>/dev/null'\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\pscp.exe' -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' 'D:\\\\Loyixalar\\\\Avtosalon\\\\deploy\\\\nginx-avtosalon.conf' root@5.189.141.151:/etc/nginx/sites-available/avtosalon\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\pscp.exe' -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' 'D:\\\\Loyixalar\\\\Avtosalon\\\\deploy\\\\nginx-avtosalon.conf' root@5.189.141.151:/tmp/avtosalon.conf\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'cat /var/www/avtosalon/admin/.env'\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'curl -s -o /dev/null -w \\\\\"%{http_code}\\\\\" http://localhost:4010/api/docs'\" 2>&1)"
     ]
   }
 }

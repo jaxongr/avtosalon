@@ -15,7 +15,7 @@ async function bootstrap() {
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(compression());
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://5.189.141.151:8082', 'http://5.189.141.151:8083'],
     credentials: true,
   });
 
