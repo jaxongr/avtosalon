@@ -326,72 +326,87 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    this.logger.log(`Message matched group "${group.title}" (${rawChatId})`);
+    // Mashina ma'lumotlarini parse qilish
+    const parsed = parseCarMessage(text);
+    const city = detectCity(group.title);
+    const phones = text.match(this.phoneRegex) || [];
 
-    // Kalit so'z filtri o'chirilgan - guruhlar faqat mashina sotuv guruhlari
-    const phones = text.match(this.phoneRegex);
-    if (!phones || phones.length === 0) return;
+    // Sender ma'lumotlari
+    let senderUsername: string | undefined;
+    let senderName: string | undefined;
+    try {
+      const sender = await message.getSender() as any;
+      if (sender) {
+        senderUsername = sender.username || undefined;
+        senderName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || undefined;
+      }
+    } catch {}
 
-    this.logger.log(`Found ${phones.length} phone(s) in group "${group.title}"`);
-
-    for (const rawPhone of phones) {
-      const phone = rawPhone.replace(/[\s\-.]/g, '');
-
-      try {
-        const city = detectCity(group.title);
-
-        // Sender ma'lumotlari
-        let senderUsername: string | undefined;
-        let senderName: string | undefined;
+    // Raqam bo'lsa - har bir raqam uchun lead
+    if (phones.length > 0) {
+      for (const rawPhone of phones) {
+        const phone = rawPhone.replace(/[\s\-.]/g, '');
         try {
-          const sender = await message.getSender() as any;
-          if (sender) {
-            senderUsername = sender.username || undefined;
-            senderName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || undefined;
+          const lead = await this.leadsService.create({
+            phone,
+            source: LeadSource.TELEGRAM_GROUP,
+            sourceGroup: group.title,
+            sourceMessage: text.substring(0, 500),
+            city,
+            carBrand: parsed.carBrand || undefined,
+            carModel: parsed.carModel || undefined,
+            carYear: parsed.carYear || undefined,
+            carPrice: parsed.carPrice || undefined,
+            carColor: parsed.carColor || undefined,
+            carMileage: parsed.carMileage || undefined,
+            carFuel: parsed.carFuel || undefined,
+            carTransmission: parsed.carTransmission || undefined,
+            carDescription: parsed.carDescription || undefined,
+            senderUsername,
+            senderName,
+          } as any);
+
+          await this.monitoredGroupsService.incrementLeadCount(group.telegramId);
+          await this.botService.notifyNewLead({
+            id: lead.id, phone: lead.phone, name: lead.name || undefined,
+            source: lead.source, sourceGroup: lead.sourceGroup || undefined,
+            sourceMessage: lead.sourceMessage || undefined,
+          });
+          await this.smsService.autoSendPromo(lead.id);
+          this.logger.log(`Lead+phone: ${phone} | ${parsed.carBrand || ''} ${parsed.carModel || ''} | ${city || 'noCity'}`);
+        } catch (error) {
+          if (!(error as any).message?.includes('already exists')) {
+            this.logger.error(`Lead error: ${(error as any).message}`);
           }
-        } catch {}
-
-        // Xabar matnidan mashina ma'lumotlarini parse qilish
-        const parsed = parseCarMessage(text);
-
-        const lead = await this.leadsService.create({
-          phone,
-          source: LeadSource.TELEGRAM_GROUP,
-          sourceGroup: group.title,
-          sourceMessage: text.substring(0, 500),
-          city,
-          carBrand: parsed.carBrand || undefined,
-          carModel: parsed.carModel || undefined,
-          carYear: parsed.carYear || undefined,
-          carPrice: parsed.carPrice || undefined,
-          carColor: parsed.carColor || undefined,
-          carMileage: parsed.carMileage || undefined,
-          carFuel: parsed.carFuel || undefined,
-          carTransmission: parsed.carTransmission || undefined,
-          carDescription: parsed.carDescription || undefined,
-          senderUsername,
-          senderName,
-        } as any);
-
-        await this.monitoredGroupsService.incrementLeadCount(group.telegramId);
-
-        await this.botService.notifyNewLead({
-          id: lead.id,
-          phone: lead.phone,
-          name: lead.name || undefined,
-          source: lead.source,
-          sourceGroup: lead.sourceGroup || undefined,
-          sourceMessage: lead.sourceMessage || undefined,
-        });
-
-        await this.smsService.autoSendPromo(lead.id);
-        this.logger.log(`Lead created from group: ${phone}`);
-      } catch (error) {
-        if (error.message?.includes('already exists')) {
-          this.logger.debug(`Duplicate lead skipped: ${phone}`);
-        } else {
-          this.logger.error(`Lead creation error: ${error.message}`);
         }
+      }
+    } else if (parsed.carBrand || parsed.carModel || parsed.carPrice) {
+      // Raqam yo'q lekin mashina ma'lumoti bor - raqamsiz saqlash
+      try {
+        await this.prisma.lead.create({
+          data: {
+            phone: 'UNKNOWN',
+            source: LeadSource.TELEGRAM_GROUP,
+            sourceGroup: group.title,
+            sourceMessage: text.substring(0, 500),
+            city,
+            carBrand: parsed.carBrand,
+            carModel: parsed.carModel,
+            carYear: parsed.carYear,
+            carPrice: parsed.carPrice,
+            carColor: parsed.carColor,
+            carMileage: parsed.carMileage,
+            carFuel: parsed.carFuel,
+            carTransmission: parsed.carTransmission,
+            carDescription: parsed.carDescription,
+            senderUsername,
+            senderName,
+          },
+        });
+        await this.monitoredGroupsService.incrementLeadCount(group.telegramId);
+        this.logger.log(`Lead(no phone): ${parsed.carBrand || ''} ${parsed.carModel || ''} ${parsed.carPrice || ''} | ${city || 'noCity'}`);
+      } catch (error) {
+        this.logger.error(`Lead save error: ${(error as any).message}`);
       }
     }
   }

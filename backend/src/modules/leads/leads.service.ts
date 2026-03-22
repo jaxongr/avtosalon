@@ -12,14 +12,6 @@ export class LeadsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateLeadDto, userId?: string) {
-    // Check if lead with same phone from same source exists
-    const existing = await this.prisma.lead.findFirst({
-      where: { phone: dto.phone, source: dto.source || LeadSource.MANUAL },
-    });
-    if (existing) {
-      throw new ConflictException('Lead with this phone already exists from this source');
-    }
-
     const lead = await this.prisma.lead.create({
       data: {
         ...dto,

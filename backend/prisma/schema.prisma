@@ -131,8 +131,9 @@ model Lead {
   reminders        Reminder[]
   callbackRequests CallbackRequest[]
 
-  @@unique([phone, source, sourceGroup])
+  @@index([phone])
   @@index([status])
+  @@index([city])
   @@index([managerId])
   @@index([createdAt])
   @@map("leads")

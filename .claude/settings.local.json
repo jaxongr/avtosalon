@@ -44,7 +44,8 @@
       "Bash(Select-String \"Userbot|telegram-userbot|Server running|NestApplication\")",
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'pm2 delete avtosalon-api 2>/dev/null; cd /var/www/avtosalon/backend && PORT=4010 pm2 start dist/src/main.js --name avtosalon-api --node-args=\\\\\"--require dotenv/config\\\\\" && pm2 save 2>/dev/null && sleep 6 && ss -tlnp | grep 4010 && curl -s http://127.0.0.1:4010/api/telegram-userbot/status'\" 2>&1)",
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'ss -tlnp | grep 4010'\" 2>&1)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'pm2 logs avtosalon-api --out --lines 30 --nostream 2>&1 | grep -E \\\\\"MSG|Found|Lead|matched\\\\\"'\" 2>&1)"
     ]
   }
 }
