@@ -65,13 +65,17 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       this.client = new TelegramClient(session, this.apiId, this.apiHash, {
         connectionRetries: 5,
         autoReconnect: true,
+        useWSS: false,
       });
 
       await this.client.connect();
 
-      // getMe() ni chaqirib session'ni to'liq aktivlashtirish
       const me = await this.client.getMe();
       this.logger.log(`Userbot connected as: ${(me as any).firstName || (me as any).username}`);
+
+      // Catch updates to keep connection alive
+      await this.client.getDialogs({ limit: 1 });
+      this.logger.log('Dialogs fetched, updates active');
 
       this.isConnected = true;
       await this.setupMessageHandler();
@@ -324,12 +328,7 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
 
     this.logger.log(`Message matched group "${group.title}" (${rawChatId})`);
 
-    if (group.keywords && group.keywords.length > 0) {
-      const lowerText = text.toLowerCase();
-      const hasKeyword = group.keywords.some((kw: string) => lowerText.includes(kw.toLowerCase()));
-      if (!hasKeyword) return;
-    }
-
+    // Kalit so'z filtri o'chirilgan - guruhlar faqat mashina sotuv guruhlari
     const phones = text.match(this.phoneRegex);
     if (!phones || phones.length === 0) return;
 
