@@ -13,6 +13,7 @@ import { ReminderCheckProcessor } from './processors/reminder-check.processor';
         redis: {
           host: config.get('REDIS_HOST', 'localhost'),
           port: config.get('REDIS_PORT', 6379),
+          password: config.get('REDIS_PASSWORD', undefined),
         },
       }),
     }),

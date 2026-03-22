@@ -4,7 +4,18 @@
       "WebSearch",
       "Bash(npx @nestjs/cli new backend --package-manager npm --skip-git --skip-install)",
       "Bash(npm create:*)",
-      "Bash(npx vite:*)"
+      "Bash(npx vite:*)",
+      "Bash(choco install:*)",
+      "Bash(powershell -Command \"& {plink -V 2>&1}\")",
+      "Bash(plink -ssh -batch -pw \"P3h2c5t4F\" root@5.189.141.151 \"echo CONNECTED && uname -a\")",
+      "Bash(plink -ssh -pw \"P3h2c5t4F\" root@5.189.141.151 \"echo CONNECTED\")",
+      "Bash(plink -ssh -pw \"P3h2c5t4F\" -no-antispoof root@5.189.141.151 \"echo CONNECTED && uname -a\")",
+      "Bash(powershell -Command \"echo y | & 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -pw 'P3h2c5t4F' root@5.189.141.151 'echo CONNECTED'\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'docker --version && docker compose version && node --version 2>/dev/null && nginx -v 2>&1 && echo --- && ls /root/ && echo --- && docker ps --format \\\\\"table {{.Names}}\\\\t{{.Status}}\\\\t{{.Ports}}\\\\\" 2>/dev/null'\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'cat /etc/nginx/sites-enabled/* 2>/dev/null | grep -E \\\\\"listen|server_name|proxy_pass\\\\\" && echo --- && ss -tlnp | grep -E \\\\\"3000|3001|3002|3003|3004|3005|4000|4001|5000|5173\\\\\"'\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'ss -tlnp 2>/dev/null | head -20'\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\pscp.exe' -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' 'D:\\\\Loyixalar\\\\Avtosalon\\\\deploy\\\\setup.sh' root@5.189.141.151:/root/avtosalon-setup.sh\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'grep requirepass /etc/redis/redis.conf 2>/dev/null'\" 2>&1)"
     ]
   }
 }
