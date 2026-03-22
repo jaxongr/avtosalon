@@ -262,8 +262,10 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       return { success: false, message: 'Userbot ulanmagan' };
     }
 
-    await this.setupMessageHandler();
-    return { success: true, message: 'Monitoring yangilandi' };
+    // DB dan aktiv guruhlarni qayta yuklash
+    this.monitoredGroups = await this.monitoredGroupsService.findActive();
+    this.logger.log(`Refreshed: ${this.monitoredGroups.length} active groups`);
+    return { success: true, message: `${this.monitoredGroups.length} ta guruh monitoring qilinmoqda` };
   }
 
   // === MESSAGE HANDLERS ===
@@ -308,23 +310,19 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     // Har bir xabarni log qilish
     this.logger.log(`MSG from chat ${rawChatId}: ${text.substring(0, 60)}`);
 
-    // Monitored guruhga tegishli ekanini tekshirish
+    // Faqat AKTIV monitored guruhga tegishli xabarlarni qayta ishlash
     const group = groups.find(g => {
+      if (!g.isActive) return false;
       const gid = g.telegramId;
-      // Barcha formatlarni solishtirish
       if (gid === rawChatId) return true;
       if (gid === `-100${rawChatId}`) return true;
       if (gid === `-${rawChatId}`) return true;
-      // gid = -1001234, rawChatId = 1234
       const gidNum = gid.replace(/^-100/, '').replace(/^-/, '');
       if (gidNum === rawChatId) return true;
       return false;
     });
 
-    if (!group) {
-      // Guruh topilmadi - bu chat monitoring ro'yxatida yo'q
-      return;
-    }
+    if (!group) return;
 
     // Mashina ma'lumotlarini parse qilish
     const parsed = parseCarMessage(text);
@@ -342,42 +340,44 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       }
     } catch {}
 
-    // Raqam bo'lsa - har bir raqam uchun lead
+    // Bitta lead yaratish - birinchi raqam asosiy, qolganlari notes ga
     if (phones.length > 0) {
-      for (const rawPhone of phones) {
-        const phone = rawPhone.replace(/[\s\-.]/g, '');
-        try {
-          const lead = await this.leadsService.create({
-            phone,
-            source: LeadSource.TELEGRAM_GROUP,
-            sourceGroup: group.title,
-            sourceMessage: text.substring(0, 500),
-            city,
-            carBrand: parsed.carBrand || undefined,
-            carModel: parsed.carModel || undefined,
-            carYear: parsed.carYear || undefined,
-            carPrice: parsed.carPrice || undefined,
-            carColor: parsed.carColor || undefined,
-            carMileage: parsed.carMileage || undefined,
-            carFuel: parsed.carFuel || undefined,
-            carTransmission: parsed.carTransmission || undefined,
-            carDescription: parsed.carDescription || undefined,
-            senderUsername,
-            senderName,
-          } as any);
+      const uniquePhones = [...new Set(phones.map((p: string) => p.replace(/[\s\-.]/g, '')))];
+      const mainPhone = uniquePhones[0];
+      const extraPhones = uniquePhones.slice(1);
 
-          await this.monitoredGroupsService.incrementLeadCount(group.telegramId);
-          await this.botService.notifyNewLead({
-            id: lead.id, phone: lead.phone, name: lead.name || undefined,
-            source: lead.source, sourceGroup: lead.sourceGroup || undefined,
-            sourceMessage: lead.sourceMessage || undefined,
-          });
-          await this.smsService.autoSendPromo(lead.id);
-          this.logger.log(`Lead+phone: ${phone} | ${parsed.carBrand || ''} ${parsed.carModel || ''} | ${city || 'noCity'}`);
-        } catch (error) {
-          if (!(error as any).message?.includes('already exists')) {
-            this.logger.error(`Lead error: ${(error as any).message}`);
-          }
+      try {
+        const lead = await this.leadsService.create({
+          phone: mainPhone,
+          source: LeadSource.TELEGRAM_GROUP,
+          sourceGroup: group.title,
+          sourceMessage: text.substring(0, 500),
+          city,
+          carBrand: parsed.carBrand || undefined,
+          carModel: parsed.carModel || undefined,
+          carYear: parsed.carYear || undefined,
+          carPrice: parsed.carPrice || undefined,
+          carColor: parsed.carColor || undefined,
+          carMileage: parsed.carMileage || undefined,
+          carFuel: parsed.carFuel || undefined,
+          carTransmission: parsed.carTransmission || undefined,
+          carDescription: parsed.carDescription || undefined,
+          notes: extraPhones.length > 0 ? `Qo'shimcha raqamlar: ${extraPhones.join(', ')}` : undefined,
+          senderUsername,
+          senderName,
+        } as any);
+
+        await this.monitoredGroupsService.incrementLeadCount(group.telegramId);
+        await this.botService.notifyNewLead({
+          id: lead.id, phone: lead.phone, name: lead.name || undefined,
+          source: lead.source, sourceGroup: lead.sourceGroup || undefined,
+          sourceMessage: lead.sourceMessage || undefined,
+        });
+        await this.smsService.autoSendPromo(lead.id);
+        this.logger.log(`Lead: ${mainPhone}${extraPhones.length ? ` +${extraPhones.length} more` : ''} | ${parsed.carBrand || ''} ${parsed.carModel || ''} | ${city || ''}`);
+      } catch (error) {
+        if (!(error as any).message?.includes('already exists')) {
+          this.logger.error(`Lead error: ${(error as any).message}`);
         }
       }
     } else if (parsed.carBrand || parsed.carModel || parsed.carPrice) {

@@ -117,16 +117,23 @@ export interface ParsedMessage {
   carDescription: string | null;
 }
 
+// So'z chegarasi bilan tekshirish - "tahalla" ichidan "lada" topmasligi uchun
+function matchWord(text: string, keyword: string): boolean {
+  const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(?:^|[\\s,;:.!?()\\-/])${escaped}(?:$|[\\s,;:.!?()\\-/])`, 'i');
+  return regex.test(text);
+}
+
 export function parseCarMessage(text: string): ParsedMessage {
   const empty: ParsedMessage = { carBrand: null, carModel: null, carYear: null, carPrice: null, carColor: null, carMileage: null, carFuel: null, carTransmission: null, carDescription: null };
   if (!text) return empty;
 
-  const lower = text.toLowerCase();
+  const lower = ' ' + text.toLowerCase() + ' ';
   const result: ParsedMessage = { ...empty, carDescription: text.substring(0, 500) };
 
   // Brand
   for (const [brand, keywords] of Object.entries(CAR_BRANDS)) {
-    if (keywords.some(kw => lower.includes(kw))) {
+    if (keywords.some(kw => matchWord(lower, kw))) {
       result.carBrand = brand;
       break;
     }
@@ -134,7 +141,7 @@ export function parseCarMessage(text: string): ParsedMessage {
 
   // Model
   for (const [model, keywords] of Object.entries(CAR_MODELS)) {
-    if (keywords.some(kw => lower.includes(kw))) {
+    if (keywords.some(kw => matchWord(lower, kw))) {
       result.carModel = model;
       // Brand auto-detect from model
       if (!result.carBrand) {
@@ -181,7 +188,7 @@ export function parseCarMessage(text: string): ParsedMessage {
 
   // Color
   for (const [color, keywords] of Object.entries(COLOR_KEYWORDS)) {
-    if (keywords.some(kw => lower.includes(kw))) {
+    if (keywords.some(kw => matchWord(lower, kw))) {
       result.carColor = color;
       break;
     }
@@ -203,7 +210,7 @@ export function parseCarMessage(text: string): ParsedMessage {
 
   // Fuel
   for (const [fuel, keywords] of Object.entries(FUEL_TYPES)) {
-    if (keywords.some(kw => lower.includes(kw))) {
+    if (keywords.some(kw => matchWord(lower, kw))) {
       result.carFuel = fuel;
       break;
     }
@@ -211,7 +218,7 @@ export function parseCarMessage(text: string): ParsedMessage {
 
   // Transmission
   for (const [trans, keywords] of Object.entries(TRANSMISSION_TYPES)) {
-    if (keywords.some(kw => lower.includes(kw))) {
+    if (keywords.some(kw => matchWord(lower, kw))) {
       result.carTransmission = trans;
       break;
     }
