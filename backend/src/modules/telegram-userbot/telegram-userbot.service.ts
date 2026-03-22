@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { LeadsService } from '../leads/leads.service';
@@ -663,6 +664,26 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       if (!hasCar) return true;
     }
     return false;
+  }
+
+  /**
+   * Har 10 daqiqada barcha guruhlardan yangi xabarlarni scrape qilish
+   * gramjs real-time update'lari barcha guruhlardan kelmaydi,
+   * shuning uchun cron bilan to'ldirish kerak
+   */
+  @Cron('*/10 * * * *')
+  async periodicScrape() {
+    if (!this.client || !this.isConnected) return;
+
+    try {
+      // Oxirgi 15 daqiqalik xabarlarni tekshirish (0.01 kun ≈ 15 min)
+      const result = await this.scrapeHistory(0.01);
+      if (result.totalLeads > 0) {
+        this.logger.log(`Periodic scrape: ${result.totalLeads} new leads from ${result.processedGroups} groups`);
+      }
+    } catch (error) {
+      this.logger.error(`Periodic scrape error: ${(error as any).message}`);
+    }
   }
 
   getStatus() {
