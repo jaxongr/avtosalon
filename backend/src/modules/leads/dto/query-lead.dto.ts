@@ -39,6 +39,11 @@ export class QueryLeadDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  city?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
   dateFrom?: string;
 
   @ApiProperty({ required: false })

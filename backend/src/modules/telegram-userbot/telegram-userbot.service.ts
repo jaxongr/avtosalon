@@ -6,6 +6,7 @@ import { MonitoredGroupsService } from '../monitored-groups/monitored-groups.ser
 import { SmsService } from '../sms/sms.service';
 import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
 import { LeadSource } from '@prisma/client';
+import { detectCity } from '../../common/utils/city-detector';
 
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
@@ -276,11 +277,13 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       const phone = rawPhone.replace(/[\s\-.]/g, '');
 
       try {
+        const city = detectCity(group.title);
         const lead = await this.leadsService.create({
           phone,
           source: LeadSource.TELEGRAM_GROUP,
           sourceGroup: group.title,
           sourceMessage: message.text.substring(0, 500),
+          city,
         });
 
         await this.monitoredGroupsService.incrementLeadCount(group.telegramId);

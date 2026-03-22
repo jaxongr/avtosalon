@@ -31,5 +31,10 @@ export class CreateLeadDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  city?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
   managerId?: string;
 }

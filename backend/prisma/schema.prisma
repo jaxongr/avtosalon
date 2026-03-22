@@ -104,6 +104,7 @@ model Lead {
   source          LeadSource @default(TELEGRAM_GROUP)
   sourceGroup     String?    @map("source_group")
   sourceMessage   String?    @map("source_message") @db.Text
+  city            String?
   status          LeadStatus @default(NEW)
   notes           String?    @db.Text
   score           Int        @default(0)

@@ -40,13 +40,14 @@ export class LeadsService {
   }
 
   async findAll(query: QueryLeadDto) {
-    const { page = 1, limit = 20, status, source, managerId, search, dateFrom, dateTo } = query;
+    const { page = 1, limit = 20, status, source, managerId, search, city, dateFrom, dateTo } = query;
     const skip = (page - 1) * limit;
 
     const where: any = {};
     if (status) where.status = status;
     if (source) where.source = source;
     if (managerId) where.managerId = managerId;
+    if (city) where.city = city;
     if (search) {
       where.OR = [
         { phone: { contains: search } },
