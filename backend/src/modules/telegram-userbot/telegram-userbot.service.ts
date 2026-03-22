@@ -162,18 +162,30 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const dialogs = await this.client.getDialogs({ limit: 100 });
+      const dialogs = await this.client.getDialogs({ limit: 500 });
       const groups = dialogs
         .filter((d: any) => d.isGroup || d.isChannel)
-        .map((d: any) => ({
-          id: d.id?.toString() || '',
-          title: d.title || d.name || 'Nomsiz',
-          isGroup: d.isGroup,
-          isChannel: d.isChannel,
-          participantsCount: (d.entity as any)?.participantsCount || 0,
-        }));
+        .map((d: any) => {
+          // Telegram kanal/supergroup ID: -100 prefix kerak
+          let chatId = d.id?.toString() || '';
+          const entity = d.entity as any;
+          if (entity?.className === 'Channel' || entity?.className === 'ChannelForbidden') {
+            chatId = `-100${entity.id}`;
+          } else if (entity?.className === 'Chat') {
+            chatId = `-${entity.id}`;
+          }
 
-      return { success: true, groups };
+          return {
+            id: chatId,
+            title: d.title || d.name || 'Nomsiz',
+            isGroup: d.isGroup || false,
+            isChannel: d.isChannel || false,
+            participantsCount: entity?.participantsCount || 0,
+            username: entity?.username || null,
+          };
+        });
+
+      return { success: true, groups, total: groups.length };
     } catch (error) {
       this.logger.error(`Get groups error: ${error.message}`);
       return { success: false, message: error.message, groups: [] };
@@ -200,9 +212,17 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
-    const chatIds = groups.map(g => g.telegramId);
-    this.logger.log(`Monitoring ${chatIds.length} groups: ${chatIds.join(', ')}`);
+    // Convert IDs to numbers for gramjs (remove -100 prefix for channels)
+    const chatIds = groups.map(g => {
+      const id = g.telegramId;
+      if (id.startsWith('-100')) return BigInt(id);
+      if (id.startsWith('-')) return parseInt(id);
+      return parseInt(id);
+    }).filter(id => id !== 0 && !isNaN(Number(id)));
 
+    this.logger.log(`Monitoring ${groups.length} groups: ${groups.map(g => g.title).join(', ')}`);
+
+    // Listen to ALL messages if chats list has issues
     this.client.addEventHandler(
       async (event: NewMessageEvent) => {
         try {
@@ -211,7 +231,7 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
           this.logger.error(`Message handler error: ${error.message}`);
         }
       },
-      new NewMessage({ chats: chatIds }),
+      new NewMessage({}),
     );
   }
 
@@ -219,10 +239,18 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     const message = event.message;
     if (!message.text) return;
 
-    const chatId = message.chatId?.toString();
-    if (!chatId) return;
+    const rawChatId = message.chatId?.toString();
+    if (!rawChatId) return;
 
-    const group = groups.find(g => g.telegramId === chatId || g.telegramId === `-100${chatId}`);
+    // Match chat ID in various formats: raw, -100prefix, negative
+    const group = groups.find(g => {
+      const gid = g.telegramId;
+      return gid === rawChatId
+        || gid === `-100${rawChatId}`
+        || gid === `-${rawChatId}`
+        || (gid.startsWith('-100') && gid.substring(4) === rawChatId)
+        || (gid.startsWith('-') && gid.substring(1) === rawChatId);
+    });
     if (!group) return;
 
     if (group.keywords && group.keywords.length > 0) {
