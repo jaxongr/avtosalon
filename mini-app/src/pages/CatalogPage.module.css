@@ -1,0 +1,151 @@
+.container {
+  padding: 0 0 80px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.header {
+  background: linear-gradient(135deg, #6B46C1, #9F7AEA);
+  padding: 24px 16px;
+  color: white;
+  text-align: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.subtitle {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.categories {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.categories::-webkit-scrollbar { display: none; }
+
+.categoryBtn {
+  padding: 8px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 20px;
+  background: white;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.categoryBtn.active {
+  background: #6B46C1;
+  color: white;
+  border-color: #6B46C1;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.card:active { transform: scale(0.98); }
+
+.cardImage {
+  position: relative;
+  height: 180px;
+  background: #f5f5f5;
+}
+
+.cardImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.noImage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+  font-size: 14px;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(107, 70, 193, 0.9);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cardBody {
+  padding: 12px;
+}
+
+.carName {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.carInfo {
+  display: flex;
+  gap: 12px;
+  font-size: 12px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.price {
+  font-size: 18px;
+  font-weight: 700;
+  color: #6B46C1;
+}
+
+.loading, .empty {
+  text-align: center;
+  padding: 60px 16px;
+  color: #999;
+  font-size: 16px;
+}
+
+.fab {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2DD4A8;
+  color: white;
+  border: none;
+  padding: 14px 32px;
+  border-radius: 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(45, 212, 168, 0.4);
+  z-index: 10;
+}
+
+.fab:active { transform: translateX(-50%) scale(0.95); }
