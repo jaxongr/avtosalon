@@ -19,7 +19,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
   private apiId: number;
   private apiHash: string;
 
-  // Auth flow state
   private authClient: TelegramClient | null = null;
   private authPhoneCodeHash: string | null = null;
 
@@ -38,10 +37,18 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    const sessionString = this.config.get('TELEGRAM_SESSION_STRING', '');
+    // Try .env first, then DB
+    let sessionString = this.config.get('TELEGRAM_SESSION_STRING', '');
+
+    if (!sessionString) {
+      const dbSession = await this.prisma.appSettings.findUnique({
+        where: { key: 'telegram_session_string' },
+      });
+      if (dbSession) sessionString = dbSession.value;
+    }
 
     if (!this.apiId || !this.apiHash || !sessionString) {
-      this.logger.warn('Telegram userbot credentials not set, userbot disabled');
+      this.logger.warn('Telegram userbot session not found, waiting for dashboard connection');
       return;
     }
 
@@ -65,7 +72,7 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // === SESSION AUTH FLOW (from Dashboard) ===
+  // === SESSION AUTH FLOW ===
 
   async sendCode(phone: string) {
     try {
@@ -86,7 +93,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       );
 
       this.authPhoneCodeHash = (result as any).phoneCodeHash;
-
       return { success: true, message: 'Kod yuborildi' };
     } catch (error) {
       this.logger.error(`Send code error: ${error.message}`);
@@ -121,36 +127,68 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
-      // Get session string
       const sessionString = this.authClient.session.save() as unknown as string;
 
-      // Save to AppSettings
       await this.prisma.appSettings.upsert({
         where: { key: 'telegram_session_string' },
         update: { value: sessionString },
         create: { key: 'telegram_session_string', value: sessionString },
       });
 
-      // Disconnect old client if exists
       if (this.client && this.isConnected) {
         await this.client.disconnect();
       }
 
-      // Use this auth client as the main client
       this.client = this.authClient;
       this.isConnected = true;
       this.authClient = null;
       this.authPhoneCodeHash = null;
 
-      // Setup message handlers
       await this.setupMessageHandler();
 
       this.logger.log('Telegram userbot session saved and connected');
-      return { success: true, message: 'Session ulandi!', sessionString };
+      return { success: true, message: 'Session ulandi!' };
     } catch (error) {
       this.logger.error(`Verify code error: ${error.message}`);
       return { success: false, message: error.message };
     }
+  }
+
+  // === GET USER'S GROUPS/CHANNELS ===
+
+  async getMyGroups() {
+    if (!this.client || !this.isConnected) {
+      return { success: false, message: 'Userbot ulanmagan', groups: [] };
+    }
+
+    try {
+      const dialogs = await this.client.getDialogs({ limit: 100 });
+      const groups = dialogs
+        .filter((d: any) => d.isGroup || d.isChannel)
+        .map((d: any) => ({
+          id: d.id?.toString() || '',
+          title: d.title || d.name || 'Nomsiz',
+          isGroup: d.isGroup,
+          isChannel: d.isChannel,
+          participantsCount: (d.entity as any)?.participantsCount || 0,
+        }));
+
+      return { success: true, groups };
+    } catch (error) {
+      this.logger.error(`Get groups error: ${error.message}`);
+      return { success: false, message: error.message, groups: [] };
+    }
+  }
+
+  // === REFRESH MONITORING ===
+
+  async refreshMonitoring() {
+    if (!this.client || !this.isConnected) {
+      return { success: false, message: 'Userbot ulanmagan' };
+    }
+
+    await this.setupMessageHandler();
+    return { success: true, message: 'Monitoring yangilandi' };
   }
 
   // === MESSAGE HANDLERS ===
@@ -163,7 +201,7 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     }
 
     const chatIds = groups.map(g => g.telegramId);
-    this.logger.log(`Monitoring ${chatIds.length} groups`);
+    this.logger.log(`Monitoring ${chatIds.length} groups: ${chatIds.join(', ')}`);
 
     this.client.addEventHandler(
       async (event: NewMessageEvent) => {
@@ -221,7 +259,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
         });
 
         await this.smsService.autoSendPromo(lead.id);
-
         this.logger.log(`Lead created from group: ${phone}`);
       } catch (error) {
         if (error.message?.includes('already exists')) {
@@ -243,7 +280,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     if (this.client) {
       await this.client.disconnect();
-      this.logger.log('Userbot disconnected');
     }
   }
 }

@@ -53,4 +53,16 @@ export class TelegramUserbotController {
   verifyCode(@Body() dto: VerifyCodeDto) {
     return this.userbotService.verifyCode(dto.phone, dto.code, dto.password);
   }
+
+  @Get('my-groups')
+  @ApiOperation({ summary: 'Get user Telegram groups/channels' })
+  getMyGroups() {
+    return this.userbotService.getMyGroups();
+  }
+
+  @Post('refresh')
+  @ApiOperation({ summary: 'Refresh group monitoring' })
+  refreshMonitoring() {
+    return this.userbotService.refreshMonitoring();
+  }
 }
