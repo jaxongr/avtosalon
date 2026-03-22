@@ -27,12 +27,9 @@ export class TelegramBotService implements OnModuleInit {
     this.bot = new Telegraf(token);
     this.setupHandlers();
 
-    try {
-      await this.bot.launch();
-      this.logger.log('Telegram bot started');
-    } catch (error) {
-      this.logger.error(`Bot launch failed: ${error.message}`);
-    }
+    this.bot.launch()
+      .then(() => this.logger.log('Telegram bot started'))
+      .catch((error) => this.logger.error(`Bot launch failed: ${error.message}`));
   }
 
   private setupHandlers() {
