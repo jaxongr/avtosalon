@@ -140,15 +140,17 @@ model Lead {
 }
 
 model MonitoredGroup {
-  id          String    @id @default(uuid())
-  telegramId  String    @unique @map("telegram_id")
-  title       String
-  keywords    String[]
-  isActive    Boolean   @default(true) @map("is_active")
-  lastChecked DateTime? @map("last_checked")
-  leadsCount  Int       @default(0) @map("leads_count")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(uuid())
+  telegramId     String    @unique @map("telegram_id")
+  title          String
+  keywords       String[]
+  isActive       Boolean   @default(true) @map("is_active")
+  lastChecked    DateTime? @map("last_checked")
+  lastMessageId  Int?      @map("last_message_id")
+  lastMessageAt  DateTime? @map("last_message_at")
+  leadsCount     Int       @default(0) @map("leads_count")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
   @@map("monitored_groups")
 }

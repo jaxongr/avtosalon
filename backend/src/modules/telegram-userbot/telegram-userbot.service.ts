@@ -93,9 +93,9 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       const me = await this.client.getMe();
       this.logger.log(`Userbot connected as: ${(me as any).firstName || (me as any).username}`);
 
-      // Catch updates to keep connection alive
-      await this.client.getDialogs({ limit: 1 });
-      this.logger.log('Dialogs fetched, updates active');
+      // Barcha dialoglani yuklash — gramjs faqat yuklangan dialoglardan update oladi
+      const dialogs = await this.client.getDialogs({ limit: 500 });
+      this.logger.log(`Dialogs fetched: ${dialogs.length} chats loaded for updates`);
 
       this.isConnected = true;
       await this.setupMessageHandler();
@@ -472,8 +472,10 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     const rawChatId = message.chatId?.toString();
     if (!rawChatId) return;
 
+    const msgId = message.id;
+
     // Har bir xabarni log qilish
-    this.logger.log(`MSG from chat ${rawChatId}: ${text.substring(0, 60)}`);
+    this.logger.log(`MSG from chat ${rawChatId} [${msgId}]: ${text.substring(0, 60)}`);
 
     // Faqat AKTIV monitored guruhga tegishli xabarlarni qayta ishlash
     const group = groups.find(g => {
@@ -488,6 +490,12 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     });
 
     if (!group) return;
+
+    // Guruhning oxirgi xabar vaqtini yangilash
+    await this.prisma.monitoredGroup.update({
+      where: { telegramId: group.telegramId },
+      data: { lastMessageId: msgId, lastMessageAt: new Date() },
+    }).catch(() => {});
 
     // Mashina ma'lumotlarini parse qilish
     const parsed = parseCarMessage(text);
@@ -530,7 +538,10 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       const exists = await this.prisma.lead.findFirst({
         where: { phone: mainPhone, createdAt: { gte: todayStart } },
       });
-      if (exists) return;
+      if (exists) {
+        this.logger.debug(`Duplicate skipped: ${mainPhone} already exists today`);
+        return;
+      }
 
       try {
         const lead = await this.leadsService.create({
@@ -551,6 +562,7 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
           notes: extraPhones.length > 0 ? `Qo'shimcha raqamlar: ${extraPhones.join(', ')}` : undefined,
           senderUsername,
           senderName,
+          telegramMsgId: msgId,
         } as any);
 
         await this.monitoredGroupsService.incrementLeadCount(group.telegramId);
