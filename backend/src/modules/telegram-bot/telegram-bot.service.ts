@@ -37,13 +37,17 @@ export class TelegramBotService implements OnModuleInit {
 
   private setupHandlers() {
     this.bot.command('start', (ctx) => {
-      const webAppUrl = this.config.get('MINI_APP_URL', 'https://your-mini-app.com');
-      ctx.reply(
-        '🚗 Avtosalon CRM Bot\n\nMashinalar katalogini ko\'rish uchun quyidagi tugmani bosing:',
-        Markup.inlineKeyboard([
-          [Markup.button.webApp('🚗 Katalogni ko\'rish', webAppUrl)],
-        ]),
-      );
+      const webAppUrl = this.config.get('MINI_APP_URL', '');
+      if (webAppUrl && webAppUrl.startsWith('https://')) {
+        ctx.reply(
+          '🚗 Avtosalon CRM Bot\n\nMashinalar katalogini ko\'rish uchun quyidagi tugmani bosing:',
+          Markup.inlineKeyboard([
+            [Markup.button.webApp('🚗 Katalogni ko\'rish', webAppUrl)],
+          ]),
+        );
+      } else {
+        ctx.reply('🚗 Avtosalon CRM Bot\n\nXush kelibsiz! Biz bilan bog\'laning.');
+      }
     });
 
     // Handle callback queries from admin group inline buttons

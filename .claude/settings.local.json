@@ -40,7 +40,10 @@
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'sleep 5 && pm2 logs avtosalon-api --lines 30 --nostream 2>&1 | grep -i -E \\\\\"telegram-userbot|send-code|verify\\\\\"'\" 2>&1)",
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'cat /etc/nginx/sites-available/avtosalon && echo --- && curl -s -o /dev/null -w \\\\\"%{http_code}\\\\\" http://127.0.0.1:4010/api/telegram-userbot/status'\" 2>&1)",
       "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'cat /var/www/avtosalon/backend/dist/src/modules/telegram-userbot/telegram-userbot.module.js'\" 2>&1)",
-      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'cat /var/www/avtosalon/backend/dist/src/app.module.js | grep -A5 ServeStatic'\" 2>&1)"
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'cat /var/www/avtosalon/backend/dist/src/app.module.js | grep -A5 ServeStatic'\" 2>&1)",
+      "Bash(Select-String \"Userbot|telegram-userbot|Server running|NestApplication\")",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'pm2 delete avtosalon-api 2>/dev/null; cd /var/www/avtosalon/backend && PORT=4010 pm2 start dist/src/main.js --name avtosalon-api --node-args=\\\\\"--require dotenv/config\\\\\" && pm2 save 2>/dev/null && sleep 6 && ss -tlnp | grep 4010 && curl -s http://127.0.0.1:4010/api/telegram-userbot/status'\" 2>&1)",
+      "Bash(powershell -Command \"& 'C:\\\\Program Files\\\\PuTTY\\\\plink.exe' -ssh -hostkey 'SHA256:MhvASEC8KtpbxytQvVFcLvEtnK9fdhsXCIdIbRJfKfA' -pw 'P3h2c5t4F' -batch root@5.189.141.151 'ss -tlnp | grep 4010'\" 2>&1)"
     ]
   }
 }
