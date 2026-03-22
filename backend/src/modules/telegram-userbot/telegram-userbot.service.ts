@@ -456,15 +456,18 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       }
     };
 
-    // gramjs event handler
-    this.client.addEventHandler(this.messageHandler, new NewMessage({ incoming: true }));
-    this.logger.log('Event handler registered (incoming messages)');
+    // gramjs event handler — incoming: false = kanal xabarlari ham olinadi
+    this.client.addEventHandler(this.messageHandler, new NewMessage({}));
+    this.logger.log('Event handler registered (all messages including channels)');
   }
 
   private async handleNewMessage(event: NewMessageEvent, groups: any[]) {
     const message = event.message;
     const text = message.text || message.message || '';
     if (!text) return;
+
+    // O'zimizning xabarlarimizni o'tkazib yuborish (outgoing)
+    if (message.out) return;
 
     const rawChatId = message.chatId?.toString();
     if (!rawChatId) return;
