@@ -26,7 +26,8 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
   private messageHandler: ((event: NewMessageEvent) => Promise<void>) | null = null;
   private monitoredGroups: any[] = [];
 
-  private readonly phoneRegex = /\+998[\s\-.]?\d{2}[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}/g;
+  // Faqat to'liq UZ raqamlar: +998 XX XXX XX XX (9 ta raqam)
+  private readonly phoneRegex = /\+998\s?[\s\-.]?\d{2}[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}/g;
 
   constructor(
     private config: ConfigService,
@@ -314,6 +315,10 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
             const mainPhone = uniquePhones[0];
             const extraPhones = uniquePhones.slice(1);
 
+            // Duplikat: shu raqam allaqachon bormi?
+            const exists = await this.prisma.lead.findFirst({ where: { phone: mainPhone } });
+            if (exists) continue;
+
             try {
               await this.prisma.lead.create({
                 data: {
@@ -472,6 +477,14 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       const uniquePhones = [...new Set(phones.map((p: string) => p.replace(/[\s\-.]/g, '')))];
       const mainPhone = uniquePhones[0];
       const extraPhones = uniquePhones.slice(1);
+
+      // Duplikat tekshiruv: bugun shu raqamdan lead bormi?
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const exists = await this.prisma.lead.findFirst({
+        where: { phone: mainPhone, createdAt: { gte: todayStart } },
+      });
+      if (exists) return;
 
       try {
         const lead = await this.leadsService.create({
