@@ -1,7 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Timeline, Button, Select, Input, Space, message, Typography, Row, Col, Image } from 'antd';
-
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://5.189.141.151:4010';
+import { Card, Descriptions, Tag, Timeline, Button, Select, Input, Space, message, Typography, Row, Col } from 'antd';
 import { ArrowLeftOutlined, SendOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi, smsApi, usersApi } from '../api/endpoints';
@@ -70,19 +68,8 @@ export default function LeadDetailPage() {
             )}
           </Card>
 
-          {(lead.carBrand || lead.carPhotos?.length > 0) && (
+          {lead.carBrand && (
             <Card title="Mashina ma'lumotlari" style={{ marginTop: 16 }}>
-              {lead.carPhotos?.length > 0 && (
-                <div style={{ marginBottom: 12 }}>
-                  <Image.PreviewGroup>
-                    <Space>
-                      {lead.carPhotos.map((p: string, i: number) => (
-                        <Image key={i} src={`${API_BASE}${p}`} width={120} height={90} style={{ objectFit: 'cover', borderRadius: 8 }} />
-                      ))}
-                    </Space>
-                  </Image.PreviewGroup>
-                </div>
-              )}
               <Descriptions column={2} bordered size="small">
                 {lead.carBrand && <Descriptions.Item label="Brend">{lead.carBrand}</Descriptions.Item>}
                 {lead.carModel && <Descriptions.Item label="Model">{lead.carModel}</Descriptions.Item>}

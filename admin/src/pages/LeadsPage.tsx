@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Card, Button, Tag, Input, Select, Space, Modal, Form, message, Typography, Image } from 'antd';
+import { Table, Card, Button, Tag, Input, Select, Space, Modal, Form, message, Typography } from 'antd';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
-
-const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://5.189.141.151:4010';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi } from '../api/endpoints';
 
@@ -54,9 +52,6 @@ export default function LeadsPage() {
           pagination={{ current: page, total: data?.meta?.total || 0, pageSize: 20, onChange: setPage }}
           scroll={{ x: 1200 }}
           columns={[
-            { title: 'Rasm', dataIndex: 'carPhotos', width: 70, render: (photos: string[]) =>
-              photos?.[0] ? <Image src={`${API_BASE}${photos[0]}`} width={50} height={40} style={{ objectFit: 'cover', borderRadius: 4 }} /> : '-'
-            },
             { title: 'Telefon', dataIndex: 'phone', width: 140 },
             { title: 'Mashina', width: 150, render: (_: any, r: any) =>
               r.carBrand ? <span><strong>{r.carBrand}</strong> {r.carModel || ''} {r.carYear || ''}</span> : '-'

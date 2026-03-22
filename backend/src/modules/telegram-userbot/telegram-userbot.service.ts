@@ -12,9 +12,7 @@ import { parseCarMessage } from '../../common/utils/message-parser';
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { v4 as uuid } from 'uuid';
+import { extractTextFromImage } from '../../common/utils/ocr-reader';
 
 @Injectable()
 export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
@@ -282,7 +280,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
 
       try {
         const city = detectCity(group.title);
-        const parsed = parseCarMessage(message.text);
 
         // Sender ma'lumotlari
         let senderUsername: string | undefined;
@@ -295,22 +292,25 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
           }
         } catch {}
 
-        // Rasmlarni yuklash
-        const carPhotos: string[] = [];
+        // OCR: rasmdan matn o'qib mashina ma'lumotini aniqlash
+        let ocrText = '';
         try {
           if (message.media && (message.media as any).photo) {
             const buffer = await this.client.downloadMedia(message.media, {});
             if (buffer && Buffer.isBuffer(buffer)) {
-              const uploadDir = join(process.cwd(), 'uploads', 'leads');
-              await mkdir(uploadDir, { recursive: true });
-              const filename = `${uuid()}.jpg`;
-              await writeFile(join(uploadDir, filename), buffer);
-              carPhotos.push(`/uploads/leads/${filename}`);
+              ocrText = await extractTextFromImage(buffer);
+              if (ocrText) {
+                this.logger.log(`OCR text from image: ${ocrText.substring(0, 100)}`);
+              }
             }
           }
         } catch (err) {
-          this.logger.debug(`Photo download skipped: ${(err as any).message}`);
+          this.logger.debug(`OCR skipped: ${(err as any).message}`);
         }
+
+        // Xabar matni + OCR matni birlashtirib parse qilish
+        const fullText = [message.text, ocrText].filter(Boolean).join(' ');
+        const parsed = parseCarMessage(fullText);
 
         const lead = await this.leadsService.create({
           phone,
@@ -327,7 +327,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
           carFuel: parsed.carFuel || undefined,
           carTransmission: parsed.carTransmission || undefined,
           carDescription: parsed.carDescription || undefined,
-          carPhotos,
           senderUsername,
           senderName,
         } as any);
