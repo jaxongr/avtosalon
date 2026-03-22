@@ -195,6 +195,69 @@ export class LeadsService {
     return { message: 'Lead deleted' };
   }
 
+  async cleanupRealEstateLeads() {
+    const realEstateKeywords = [
+      // Uy-joy
+      'kvartira', 'xonadon', 'uy sotiladi', 'uy sotuv', 'hovli',
+      'sotka', 'uchastka', 'yer sotiladi', 'yer sotuv', 'участок',
+      'квартира', 'дом продается', 'комната', 'ijara', 'аренда', 'ijaraga',
+      "ko'chmas mulk", 'недвижимость', 'qavatli', 'qavat', 'etaj', 'этаж',
+      'penthouse', 'pentxaus', 'ofis sotiladi', 'magazin sotiladi',
+      'dokon sotiladi', 'ombor sotiladi',
+      // Chorva mol / hayvonlar
+      'chorva', 'mol', 'sigir', 'buzoq', "ho'kiz", "qo'y", 'echki',
+      'ot sotiladi', 'otlar', 'hayvon', 'mollar', 'qoramol',
+      'корова', 'бык', 'телёнок', 'овца', 'коза', 'лошадь', 'скот',
+      "dardi og'ir", 'dardi ogir', 'zoti bor', 'zotli',
+      'parrandalar', 'tovuq', "o'rdak", 'kurka',
+    ];
+
+    // sourceMessage ichida uy-joy kalit so'zlari bor leadlarni topish
+    const allLeads = await this.prisma.lead.findMany({
+      where: {
+        source: LeadSource.TELEGRAM_GROUP,
+        sourceMessage: { not: null },
+      },
+      select: { id: true, sourceMessage: true, phone: true },
+    });
+
+    const toDelete: string[] = [];
+    for (const lead of allLeads) {
+      if (!lead.sourceMessage) continue;
+      const lower = lead.sourceMessage.toLowerCase();
+      const matchCount = realEstateKeywords.filter(kw => lower.includes(kw)).length;
+
+      // 2+ kalit so'z = aniq uy-joy
+      if (matchCount >= 2) {
+        toDelete.push(lead.id);
+        continue;
+      }
+
+      // 1 kalit so'z + mashina so'zi yo'q = uy-joy
+      if (matchCount === 1) {
+        const carIndicators = [
+          'mashina', 'avto', 'avtomobil', 'машина', 'авто',
+          'probeg', 'пробег', 'mator', 'двигатель', 'karopka', 'кпп',
+        ];
+        const hasCar = carIndicators.some(c => lower.includes(c));
+        if (!hasCar) toDelete.push(lead.id);
+      }
+    }
+
+    if (toDelete.length === 0) {
+      return { deleted: 0, message: 'Uy-joy leadlar topilmadi' };
+    }
+
+    // Avval bog'liq yozuvlarni o'chirish
+    await this.prisma.leadActivity.deleteMany({ where: { leadId: { in: toDelete } } });
+    await this.prisma.smsMessage.deleteMany({ where: { leadId: { in: toDelete } } });
+    await this.prisma.reminder.deleteMany({ where: { leadId: { in: toDelete } } });
+    await this.prisma.callbackRequest.deleteMany({ where: { leadId: { in: toDelete } } });
+    const result = await this.prisma.lead.deleteMany({ where: { id: { in: toDelete } } });
+
+    return { deleted: result.count, message: `${result.count} ta uy-joy lead o'chirildi` };
+  }
+
   async exportToExcel(query: QueryLeadDto): Promise<Buffer> {
     const { status, source, city, search, dateFrom, dateTo } = query;
     const where: any = {};

@@ -65,6 +65,12 @@ export class LeadsController {
     return this.leadsService.addNote(id, dto, req.user.id);
   }
 
+  @Post('cleanup/real-estate')
+  @ApiOperation({ summary: 'Delete all real estate leads' })
+  cleanupRealEstate() {
+    return this.leadsService.cleanupRealEstateLeads();
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.leadsService.remove(id);

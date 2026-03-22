@@ -26,8 +26,27 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
   private messageHandler: ((event: NewMessageEvent) => Promise<void>) | null = null;
   private monitoredGroups: any[] = [];
 
-  // Faqat to'liq UZ raqamlar: +998 XX XXX XX XX (9 ta raqam)
-  private readonly phoneRegex = /\+998\s?[\s\-.]?\d{2}[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}/g;
+  // UZ raqamlar — turli formatlarni qo'llab-quvvatlash:
+  // +998 90 123 45 67, 998901234567, 90-123-45-67, 90 123 45 67, (90) 123-45-67
+  private readonly phoneRegex = /(?:\+?998[\s\-.]?)?\(?\d{2}\)?[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}/g;
+
+  // Avtosalon uchun EMAS bo'lgan e'lon kalit so'zlari
+  private readonly realEstateKeywords = [
+    // Uy-joy / ko'chmas mulk
+    'kvartira', 'xonadon', 'uy sotiladi', 'uy sotuv', 'hovli', 'hovliyo\'q',
+    'sotka', 'uchastka', 'yer sotiladi', 'yer sotuv', 'участок',
+    'квартира', 'дом продается', 'комната', 'xona', 'etaj', 'этаж',
+    'qavatli', 'qavat', 'podval', 'чердак', 'garaj sotiladi',
+    'ko\'chmas mulk', 'недвижимость', 'ijara', 'аренда', 'ijaraga',
+    'dom', 'uy-joy', 'penthouse', 'pentxaus', 'ofis sotiladi',
+    'magazin sotiladi', 'dokon sotiladi', 'ombor sotiladi',
+    // Chorva mol / hayvonlar
+    'chorva', 'mol', 'sigir', 'buzoq', 'ho\'kiz', 'qo\'y', 'echki',
+    'ot sotiladi', 'otlar', 'hayvon', 'mollar', 'qoramol',
+    'корова', 'бык', 'телёнок', 'овца', 'коза', 'лошадь', 'скот',
+    'dardi og\'ir', 'dardi ogir', 'zoti bor', 'zotli',
+    'parrandalar', 'tovuq', 'o\'rdak', 'kurka',
+  ];
 
   constructor(
     private config: ConfigService,
@@ -296,8 +315,16 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
           const text = msg.text || msg.message || '';
           if (!text) continue;
 
-          const phones = text.match(this.phoneRegex) || [];
           const parsed = parseCarMessage(text);
+
+          // Uy-joy/chorva e'lonlarini filtrlash (mashina modeli topilsa o'tkazish)
+          if (!parsed.carBrand && !parsed.carModel && this.isRealEstateMessage(text)) continue;
+
+          const rawPhones = text.match(this.phoneRegex) || [];
+          const validPhones = rawPhones
+            .map(p => this.normalizePhone(p))
+            .filter((p): p is string => p !== null);
+          const uniquePhones = [...new Set(validPhones)];
           const city = detectCity(group.title);
 
           let senderUsername: string | undefined;
@@ -310,13 +337,16 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
             }
           } catch {}
 
-          if (phones.length > 0) {
-            const uniquePhones = [...new Set(phones.map((p: string) => p.replace(/[\s\-.]/g, '')))];
+          if (uniquePhones.length > 0) {
             const mainPhone = uniquePhones[0];
             const extraPhones = uniquePhones.slice(1);
 
-            // Duplikat: shu raqam allaqachon bormi?
-            const exists = await this.prisma.lead.findFirst({ where: { phone: mainPhone } });
+            // Duplikat: bugun shu raqamdan lead bormi? (kuniga 1 marta)
+            const scrapeTodayStart = new Date();
+            scrapeTodayStart.setHours(0, 0, 0, 0);
+            const exists = await this.prisma.lead.findFirst({
+              where: { phone: mainPhone, createdAt: { gte: scrapeTodayStart } },
+            });
             if (exists) continue;
 
             try {
@@ -458,8 +488,22 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
 
     // Mashina ma'lumotlarini parse qilish
     const parsed = parseCarMessage(text);
+
+    // Uy-joy/chorva e'lonlarini filtrlash (lekin mashina modeli topilsa — o'tkazib yuborma)
+    if (!parsed.carBrand && !parsed.carModel && this.isRealEstateMessage(text)) {
+      this.logger.debug(`Skipped non-auto message from "${group.title}": ${text.substring(0, 60)}`);
+      return;
+    }
     const city = detectCity(group.title);
-    const phones = text.match(this.phoneRegex) || [];
+    const rawPhones = text.match(this.phoneRegex) || [];
+
+    // Raqamlarni normalize va validatsiya qilish
+    const validPhones = rawPhones
+      .map(p => this.normalizePhone(p))
+      .filter((p): p is string => p !== null);
+    const uniquePhones = [...new Set(validPhones)];
+
+    this.logger.debug(`Parsed: brand=${parsed.carBrand}, model=${parsed.carModel}, phones=${uniquePhones.length} (raw=${rawPhones.length}), city=${city}`);
 
     // Sender ma'lumotlari
     let senderUsername: string | undefined;
@@ -473,12 +517,11 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     } catch {}
 
     // Bitta lead yaratish - birinchi raqam asosiy, qolganlari notes ga
-    if (phones.length > 0) {
-      const uniquePhones = [...new Set(phones.map((p: string) => p.replace(/[\s\-.]/g, '')))];
+    if (uniquePhones.length > 0) {
       const mainPhone = uniquePhones[0];
       const extraPhones = uniquePhones.slice(1);
 
-      // Duplikat tekshiruv: bugun shu raqamdan lead bormi?
+      // Duplikat tekshiruv: bugun shu raqamdan lead bormi? (kuniga 1 marta)
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
       const exists = await this.prisma.lead.findFirst({
@@ -513,8 +556,8 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
           source: lead.source, sourceGroup: lead.sourceGroup || undefined,
           sourceMessage: lead.sourceMessage || undefined,
         });
-        await this.smsService.autoSendPromo(lead.id);
-        this.logger.log(`Lead: ${mainPhone}${extraPhones.length ? ` +${extraPhones.length} more` : ''} | ${parsed.carBrand || ''} ${parsed.carModel || ''} | ${city || ''}`);
+        const smsResult = await this.smsService.autoSendPromo(lead.id);
+        this.logger.log(`Lead: ${mainPhone}${extraPhones.length ? ` +${extraPhones.length} more` : ''} | ${parsed.carBrand || ''} ${parsed.carModel || ''} | ${city || ''} | SMS: ${JSON.stringify(smsResult)}`);
       } catch (error) {
         if (!(error as any).message?.includes('already exists')) {
           this.logger.error(`Lead error: ${(error as any).message}`);
@@ -549,6 +592,58 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
         this.logger.error(`Lead save error: ${(error as any).message}`);
       }
     }
+  }
+
+  /**
+   * Telefon raqamni +998XXXXXXXXX formatga keltirish
+   * Noto'g'ri raqamlarni (narx, yil, probeg) filtrlash
+   */
+  private normalizePhone(raw: string): string | null {
+    const digits = raw.replace(/\D/g, '');
+
+    let phone: string;
+    if (digits.length === 12 && digits.startsWith('998')) {
+      phone = '+' + digits; // 998901234567 → +998901234567
+    } else if (digits.length === 9 && /^(9[0-9]|3[3]|7[0-9])/.test(digits)) {
+      phone = '+998' + digits; // 901234567 → +998901234567
+    } else {
+      return null; // Noto'g'ri format (narx, yil, probeg va h.k.)
+    }
+
+    // UZ operator kodlarni tekshirish: 90,91,93,94,95,97,98,99,33,55,71,77,78,88
+    const operatorCode = phone.substring(4, 6);
+    const validCodes = ['90', '91', '93', '94', '95', '97', '98', '99', '33', '55', '71', '77', '78', '88', '20', '50'];
+    if (!validCodes.includes(operatorCode)) return null;
+
+    return phone;
+  }
+
+  /**
+   * O'zbek unicode belgilarni oddiy apostrofga aylantirish
+   * Telegram'da ʻ (U+02BB), ʼ (U+02BC), ' (U+2018), ' (U+2019) ishlatiladi
+   */
+  private normalizeText(text: string): string {
+    return text
+      .toLowerCase()
+      .replace(/[\u02BB\u02BC\u2018\u2019\u0060\u00B4]/g, "'");
+  }
+
+  private isRealEstateMessage(text: string): boolean {
+    const lower = this.normalizeText(text);
+    const matchCount = this.realEstateKeywords.filter(kw => lower.includes(kw)).length;
+    // 2+ kalit so'z topilsa — uy-joy e'loni
+    if (matchCount >= 2) return true;
+    // 1 ta kalit so'z + mashina so'zi yo'q = uy-joy
+    if (matchCount === 1) {
+      const carIndicators = [
+        'mashina', 'avto', 'avtomobil', 'машина', 'авто',
+        'probeg', 'пробег', 'mator', 'двигатель', 'karopka',
+        'кпп', 'coupe', 'sedan', 'kuzov', 'кузов',
+      ];
+      const hasCar = carIndicators.some(c => lower.includes(c));
+      if (!hasCar) return true;
+    }
+    return false;
   }
 
   getStatus() {

@@ -59,7 +59,8 @@ export class SmsService {
     });
 
     if (recentSms) {
-      return { message: 'SMS already sent to this number within 24 hours', skipped: true };
+      this.logger.debug(`SMS skipped: already sent to ${lead.phone} within 24h`);
+      return { success: false, skipped: true, message: 'SMS already sent to this number within 24 hours' };
     }
 
     const smsRecord = await this.prisma.smsMessage.create({
@@ -99,17 +100,67 @@ export class SmsService {
     const setting = await this.prisma.appSettings.findUnique({
       where: { key: 'sms_enabled' },
     });
-    if (setting?.value !== 'true') return;
+    if (setting?.value !== 'true') {
+      this.logger.debug(`autoSendPromo skipped: SMS disabled (leadId=${leadId})`);
+      return { skipped: true, reason: 'SMS disabled' };
+    }
 
     const template = await this.prisma.smsTemplate.findFirst({
       where: { isDefault: true, isActive: true },
     });
-    if (!template) return;
+    if (!template) {
+      this.logger.warn(`autoSendPromo skipped: no default active template (leadId=${leadId})`);
+      return { skipped: true, reason: 'No default template' };
+    }
 
-    return this.sendSmsToLead({
-      leadId,
-      message: template.content,
-    });
+    // Replace placeholders in template
+    let message = template.content;
+    if (message.includes('{miniapp_link}')) {
+      const botUsername = await this.getBotUsername();
+      const miniappLink = botUsername
+        ? `https://t.me/${botUsername}?start=catalog`
+        : '';
+      message = message.replace(/\{miniapp_link\}/g, miniappLink);
+    }
+
+    this.logger.log(`autoSendPromo: sending SMS to leadId=${leadId}`);
+
+    try {
+      const result = await this.sendSmsToLead({ leadId, message });
+      this.logger.log(`autoSendPromo result: leadId=${leadId}, success=${result.success}, skipped=${result.skipped || false}`);
+      return result;
+    } catch (error) {
+      this.logger.error(`autoSendPromo error: leadId=${leadId}, ${(error as any).message}`);
+      return { success: false, error: (error as any).message };
+    }
+  }
+
+  private async getBotUsername(): Promise<string | null> {
+    try {
+      const setting = await this.prisma.appSettings.findUnique({
+        where: { key: 'telegram_bot_username' },
+      });
+      if (setting?.value) return setting.value;
+
+      // Fallback: ConfigService orqali
+      const token = process.env.TELEGRAM_BOT_TOKEN;
+      if (token) {
+        const res = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+        const data = await res.json();
+        if (data.ok && data.result?.username) {
+          // Cache it in DB
+          await this.prisma.appSettings.upsert({
+            where: { key: 'telegram_bot_username' },
+            update: { value: data.result.username },
+            create: { key: 'telegram_bot_username', value: data.result.username },
+          });
+          return data.result.username;
+        }
+      }
+    } catch (error) {
+      this.logger.error(`getBotUsername error: ${(error as any).message}`);
+    }
+    return null;
   }
 
   async getSmsHistory(leadId?: string) {

@@ -4,78 +4,183 @@
  */
 
 const CAR_BRANDS: Record<string, string[]> = {
-  'Chevrolet': ['chevrolet', 'шевроле', 'шеви', 'chevralet', 'shevrole', 'shevrale'],
-  'Daewoo': ['daewoo', 'дэу', 'деу', 'deu'],
-  'Hyundai': ['hyundai', 'хюндай', 'хёндай', 'хундай', 'hundai', 'xundai', 'xyundai'],
-  'Kia': ['kia', 'киа', 'кия'],
-  'Toyota': ['toyota', 'тойота', 'тоёта', 'тайота', 'tayota'],
-  'Lexus': ['lexus', 'лексус'],
-  'BMW': ['bmw', 'бмв', 'бэмвэ'],
-  'Mercedes': ['mercedes', 'мерседес', 'мерс', 'benz', 'mersedes'],
-  'Audi': ['audi', 'ауди'],
-  'Volkswagen': ['volkswagen', 'vw', 'фольксваген', 'folksvagen'],
-  'Nissan': ['nissan', 'ниссан'],
-  'Honda': ['honda', 'хонда'],
-  'Mitsubishi': ['mitsubishi', 'митсубиси', 'митсубиши'],
+  'Chevrolet': ['chevrolet', 'шевроле', 'шеви', 'chevralet', 'shevrole', 'shevrale', 'chevrale', 'shevrolet'],
+  'Daewoo': ['daewoo', 'дэу', 'деу', 'deu', 'деуу'],
+  'Hyundai': ['hyundai', 'хюндай', 'хёндай', 'хундай', 'hundai', 'xundai', 'xyundai', 'xunday', 'хендай', 'хенде'],
+  'Kia': ['kia', 'киа', 'кия', 'кио'],
+  'Toyota': ['toyota', 'тойота', 'тоёта', 'тайота', 'tayota', 'тоета', 'тоиота'],
+  'Lexus': ['lexus', 'лексус', 'leksus'],
+  'BMW': ['bmw', 'бмв', 'бэмвэ', 'бмвшка'],
+  'Mercedes': ['mercedes', 'мерседес', 'мерс', 'benz', 'mersedes', 'мерин', 'мерцедес'],
+  'Audi': ['audi', 'ауди', 'авди'],
+  'Volkswagen': ['volkswagen', 'vw', 'фольксваген', 'folksvagen', 'фолксваген'],
+  'Nissan': ['nissan', 'ниссан', 'нисан'],
+  'Honda': ['honda', 'хонда', 'xonda'],
+  'Mitsubishi': ['mitsubishi', 'митсубиси', 'митсубиши', 'mitsubisi'],
   'Mazda': ['mazda', 'мазда'],
   'Ford': ['ford', 'форд'],
   'Opel': ['opel', 'опель'],
-  'Renault': ['renault', 'рено'],
-  'Skoda': ['skoda', 'шкода'],
-  'Lada': ['lada', 'лада', 'ваз', 'vaz', 'жигули'],
-  'BYD': ['byd', 'бид', 'бюд'],
-  'Geely': ['geely', 'джили', 'jili'],
-  'Chery': ['chery', 'чери', 'чэри'],
-  'Haval': ['haval', 'хавал'],
-  'JAC': ['jac', 'джак'],
-  'Changan': ['changan', 'чанган'],
-  'Jetour': ['jetour', 'жетур', 'джетур'],
-  'Exeed': ['exeed', 'эксид', 'eksid'],
+  'Renault': ['renault', 'рено', 'рeно'],
+  'Skoda': ['skoda', 'шкода', 'shkoda'],
+  'Lada': ['lada', 'лада', 'ваз', 'vaz', 'жигули', 'jiguli'],
+  'BYD': ['byd', 'бид', 'бюд', 'бyд'],
+  'Geely': ['geely', 'джили', 'jili', 'жили', 'gili'],
+  'Chery': ['chery', 'чери', 'чэри', 'cheri'],
+  'Haval': ['haval', 'хавал', 'хавол', 'xaval'],
+  'JAC': ['jac', 'джак', 'жак'],
+  'Changan': ['changan', 'чанган', 'чанан'],
+  'Jetour': ['jetour', 'жетур', 'джетур', 'jetour'],
+  'Exeed': ['exeed', 'эксид', 'eksid', 'иксид'],
   'Ravon': ['ravon', 'равон'],
-  'Isuzu': ['isuzu', 'исузу'],
+  'Isuzu': ['isuzu', 'исузу', 'изузу'],
   'MAN': ['man '],
   'Volvo': ['volvo', 'вольво'],
+  'Tesla': ['tesla', 'тесла'],
+  'Porsche': ['porsche', 'порше', 'порш'],
+  'Peugeot': ['peugeot', 'пежо', 'pejo'],
+  'Subaru': ['subaru', 'субару'],
+  'Suzuki': ['suzuki', 'сузуки'],
+  'Dongfeng': ['dongfeng', 'донгфенг', 'донфенг'],
+  'GAZ': ['газель', 'gazel', 'газ '],
+  'UAZ': ['уаз', 'uaz'],
+  'Tank': ['tank ', 'танк '],
+  'Great Wall': ['great wall', 'грейт волл'],
+  'BAIC': ['baic', 'баик'],
+  'FAW': ['faw', 'фав'],
+  'Zeekr': ['zeekr', 'зикр'],
+  'Li Auto': ['li auto', 'ли авто'],
+  'Hongqi': ['hongqi', 'хонки', 'хунки'],
 };
 
 const CAR_MODELS: Record<string, string[]> = {
-  'Gentra': ['gentra', 'гентра', 'jentira', 'gentira', 'jentra', 'джентра', 'jentira'],
-  'Lacetti': ['lacetti', 'лачетти', 'лацетти', 'lasetti', 'лачети', 'лачетти'],
-  'Malibu': ['malibu', 'малибу', 'malibi'],
-  'Cobalt': ['cobalt', 'кобальт', 'kobalt'],
-  'Nexia': ['nexia', 'нексия', 'nexia-3', 'нексия-3', 'neksia'],
-  'Matiz': ['matiz', 'матиз'],
-  'Spark': ['spark', 'спарк'],
-  'Damas': ['damas', 'дамас'],
+  // Chevrolet / Daewoo
+  'Gentra': ['gentra', 'гентра', 'jentira', 'gentira', 'jentra', 'джентра', 'жентра', 'гентира'],
+  'Lacetti': ['lacetti', 'лачетти', 'лацетти', 'lasetti', 'лачети', 'лачетти', 'lachetti', 'лачетi', 'latsetti'],
+  'Malibu': ['malibu', 'малибу', 'malibi', 'malbu', 'малибy', 'малибю'],
+  'Cobalt': ['cobalt', 'кобальт', 'kobalt', 'кобалт', 'кобольт', 'кoбальт'],
+  'Nexia': ['nexia', 'нексия', 'nexia-3', 'нексия-3', 'neksia', 'нехия', 'nexia3', 'нексия3', 'neksia3'],
+  'Matiz': ['matiz', 'матиз', 'матис'],
+  'Spark': ['spark', 'спарк', 'sparк'],
+  'Damas': ['damas', 'дамас', 'dammas', 'дамаc'],
   'Labo': ['labo', 'лабо'],
-  'Captiva': ['captiva', 'каптива', 'kaptiva'],
-  'Tracker': ['tracker', 'трекер', 'тракер', 'treker'],
-  'Equinox': ['equinox', 'эквинокс', 'ekvinoks'],
-  'Tahoe': ['tahoe', 'тахо'],
-  'Traverse': ['traverse', 'траверс'],
-  'Onix': ['onix', 'оникс'],
+  'Captiva': ['captiva', 'каптива', 'kaptiva', 'каптиво'],
+  'Tracker': ['tracker', 'трекер', 'тракер', 'treker', 'тракёр'],
+  'Equinox': ['equinox', 'эквинокс', 'ekvinoks', 'эквинос'],
+  'Tahoe': ['tahoe', 'тахо', 'тахое'],
+  'Traverse': ['traverse', 'траверс', 'траверз'],
+  'Trailblazer': ['trailblazer', 'трейлблейзер', 'трэйлблэйзер', 'treylbleyzer'],
+  'Onix': ['onix', 'оникс', 'онис'],
   'Monza': ['monza', 'монза'],
   'Orlando': ['orlando', 'орландо'],
   'Epica': ['epica', 'эпика'],
   'Aveo': ['aveo', 'авео'],
-  'Cruze': ['cruze', 'круз'],
-  'Camry': ['camry', 'камри', 'кемри', 'kemri', 'kamri'],
-  'Corolla': ['corolla', 'королла', 'karolla'],
-  'RAV4': ['rav4', 'рав4', 'rav-4'],
-  'Land Cruiser': ['land cruiser', 'ланд крузер', 'лк', 'lc', 'лэнд крузер'],
-  'Prado': ['prado', 'прадо'],
-  'Highlander': ['highlander', 'хайлендер', 'хайландер'],
-  'Fortuner': ['fortuner', 'фортунер'],
-  'Sonata': ['sonata', 'соната'],
-  'Tucson': ['tucson', 'туксон', 'тусон', 'tukson'],
-  'Accent': ['accent', 'акцент', 'солярис', 'solaris', 'aksent'],
-  'Elantra': ['elantra', 'элантра', 'elantr'],
-  'Santa Fe': ['santa fe', 'санта фе', 'сантафе', 'santafe'],
+  'Cruze': ['cruze', 'круз', 'крузе'],
+  // Toyota
+  'Camry': ['camry', 'камри', 'кемри', 'kemri', 'kamri', 'кэмри', 'kamry'],
+  'Corolla': ['corolla', 'королла', 'karolla', 'королла', 'корола'],
+  'RAV4': ['rav4', 'рав4', 'rav-4', 'рав 4', 'rav 4'],
+  'Land Cruiser': ['land cruiser', 'ланд крузер', 'лк', 'lc', 'лэнд крузер', 'ландкрузер', 'land kruser', 'land kruzer'],
+  'Prado': ['prado', 'прадо', 'прада'],
+  'Highlander': ['highlander', 'хайлендер', 'хайландер', 'хайлэндер'],
+  'Fortuner': ['fortuner', 'фортунер', 'фортюнер'],
+  'Hilux': ['hilux', 'хайлюкс', 'хайлукс', 'хилукс'],
+  'Yaris': ['yaris', 'ярис'],
+  'Crown': ['crown', 'краун'],
+  'Alphard': ['alphard', 'альфард', 'алфард'],
+  // Hyundai
+  'Sonata': ['sonata', 'соната', 'сонато'],
+  'Tucson': ['tucson', 'туксон', 'тусон', 'tukson', 'тукcон', 'тюксон', 'тюсон'],
+  'Accent': ['accent', 'акцент', 'солярис', 'solaris', 'aksent', 'аксент'],
+  'Elantra': ['elantra', 'элантра', 'elantr', 'элантро'],
+  'Santa Fe': ['santa fe', 'санта фе', 'сантафе', 'santafe', 'санта-фе'],
+  'Creta': ['creta', 'крета', 'кретa'],
+  'Palisade': ['palisade', 'палисад', 'палисейд'],
+  'Grandeur': ['grandeur', 'грандер', 'грандёр'],
+  // Kia
   'Rio': ['rio', 'рио'],
-  'K5': ['k5', 'к5'],
-  'Sportage': ['sportage', 'спортаж', 'спортейдж'],
-  'Sorento': ['sorento', 'соренто'],
-  'R4': ['r4', 'р4'],
-  'R3': ['r3', 'р3'],
+  'K5': ['k5', 'к5', 'k-5'],
+  'K3': ['k3', 'к3', 'k-3'],
+  'Cerato': ['cerato', 'церато', 'серато', 'cerато'],
+  'Sportage': ['sportage', 'спортаж', 'спортейдж', 'спортейж', 'sportaj'],
+  'Sorento': ['sorento', 'соренто', 'сорэнто'],
+  'Seltos': ['seltos', 'селтос', 'сельтос'],
+  'Carnival': ['carnival', 'карнивал'],
+  // Ravon
+  'R4': ['r4', 'р4', 'r-4'],
+  'R3': ['r3', 'р3', 'r-3'],
+  'R2': ['r2', 'р2', 'r-2'],
+  // Lada
+  'Vesta': ['vesta', 'веста'],
+  'Granta': ['granta', 'гранта'],
+  'Niva': ['niva', 'нива'],
+  'Priora': ['priora', 'приора'],
+  'Largus': ['largus', 'ларгус'],
+  // BYD
+  'Song Plus': ['song plus', 'сонг плюс', 'сонг плас', 'song+', 'songplus'],
+  'Song': ['song ', 'сонг '],
+  'Han': ['han ', 'хан '],
+  'Tang': ['tang ', 'танг '],
+  'Qin': ['qin', 'чин'],
+  'Seal': ['seal', 'сеал', 'сил'],
+  'Dolphin': ['dolphin', 'дольфин', 'дельфин'],
+  'Atto 3': ['atto 3', 'атто 3', 'atto3', 'атто3'],
+  // Geely
+  'Monjaro': ['monjaro', 'монжаро', 'monjаro'],
+  'Coolray': ['coolray', 'кулрей', 'кулрэй', 'kulrey', 'coolrey'],
+  'Atlas': ['atlas', 'атлас'],
+  'Emgrand': ['emgrand', 'эмгранд', 'емгранд'],
+  // Chery
+  'Tiggo 4': ['tiggo 4', 'тигго 4', 'tiggo4', 'тигго4'],
+  'Tiggo 7': ['tiggo 7', 'тигго 7', 'tiggo7', 'тигго7'],
+  'Tiggo 8': ['tiggo 8', 'тигго 8', 'tiggo8', 'тигго8'],
+  'Tiggo': ['tiggo', 'тигго'],
+  'Arrizo': ['arrizo', 'арризо', 'aризо'],
+  // Haval
+  'Jolion': ['jolion', 'жолион', 'джолион', 'jolian'],
+  'H6': ['h6', 'х6', 'h-6'],
+  'F7': ['f7', 'ф7', 'f-7'],
+  'Dargo': ['dargo', 'дарго'],
+  // Jetour
+  'X70': ['x70', 'х70', 'x-70'],
+  'Dashing': ['dashing', 'дашинг', 'дэшинг'],
+  'T2': ['t2', 'т2'],
+  // Changan
+  'CS35': ['cs35', 'цс35', 'cs-35'],
+  'CS55': ['cs55', 'цс55', 'cs-55'],
+  'CS75': ['cs75', 'цс75', 'cs-75'],
+  'UNI-T': ['uni-t', 'юни-т', 'unit', 'юнит'],
+  'UNI-V': ['uni-v', 'юни-в', 'univ', 'юнив'],
+  // Exeed
+  'VX': ['vx ', 'вх '],
+  'LX': ['lx ', 'лх '],
+  'TXL': ['txl', 'тхл'],
+  // Dongfeng
+  'ix35': ['ix35', 'их35', 'ix-35'],
+  // Mercedes
+  'E-Class': ['e-class', 'е-класс', 'e class', 'e200', 'e220', 'e300', 'е200', 'е220', 'е300', 'e250'],
+  'C-Class': ['c-class', 'с-класс', 'c class', 'c200', 'c180', 'c300', 'с200', 'с180', 'с300', 'c250'],
+  'S-Class': ['s-class', 'с-класс', 's class', 's500', 's350', 'с500', 'с350'],
+  'GLE': ['gle', 'гле'],
+  'GLC': ['glc', 'глц'],
+  'Sprinter': ['sprinter', 'спринтер'],
+  // BMW
+  'X5': ['x5', 'х5', 'x-5', 'икс5'],
+  'X3': ['x3', 'х3', 'x-3'],
+  'X7': ['x7', 'х7', 'x-7'],
+  // Nissan
+  'Pathfinder': ['pathfinder', 'патфайндер', 'пасфайндер'],
+  'X-Trail': ['x-trail', 'х-трейл', 'хтрейл', 'xtrail'],
+  'Qashqai': ['qashqai', 'кашкай', 'кашкаи'],
+  // Others
+  'Duster': ['duster', 'дастер', 'дустер'],
+  'Logan': ['logan', 'логан'],
+  'Polo': ['polo ', 'поло '],
+  'Tiguan': ['tiguan', 'тигуан'],
+  'Jetta': ['jetta', 'джетта', 'жетта'],
+  'Passat': ['passat', 'пассат'],
+  'Focus': ['focus', 'фокус'],
+  'Outlander': ['outlander', 'аутлендер', 'аутландер'],
+  'CX-5': ['cx-5', 'cx5', 'сх-5', 'сх5'],
 };
 
 const FUEL_TYPES: Record<string, string[]> = {
@@ -128,7 +233,9 @@ export function parseCarMessage(text: string): ParsedMessage {
   const empty: ParsedMessage = { carBrand: null, carModel: null, carYear: null, carPrice: null, carColor: null, carMileage: null, carFuel: null, carTransmission: null, carDescription: null };
   if (!text) return empty;
 
-  const lower = ' ' + text.toLowerCase() + ' ';
+  // Unicode apostroflarni normalize qilish (Telegram'da ʻ ʼ ' ' ishlatiladi)
+  const normalized = text.replace(/[\u02BB\u02BC\u2018\u2019\u0060\u00B4]/g, "'");
+  const lower = ' ' + normalized.toLowerCase() + ' ';
   const result: ParsedMessage = { ...empty, carDescription: text.substring(0, 500) };
 
   // Brand
@@ -145,16 +252,62 @@ export function parseCarMessage(text: string): ParsedMessage {
       result.carModel = model;
       // Brand auto-detect from model
       if (!result.carBrand) {
-        if (['Gentra', 'Lacetti', 'Malibu', 'Cobalt', 'Nexia', 'Matiz', 'Spark', 'Damas', 'Labo', 'Captiva', 'Tracker', 'Equinox', 'Tahoe', 'Traverse', 'Onix', 'Monza', 'Orlando', 'Epica', 'Aveo', 'Cruze'].includes(model)) {
-          result.carBrand = 'Chevrolet';
-        } else if (['Camry', 'Corolla', 'RAV4', 'Land Cruiser', 'Prado', 'Highlander', 'Fortuner'].includes(model)) {
-          result.carBrand = 'Toyota';
-        } else if (['Sonata', 'Tucson', 'Accent', 'Elantra', 'Santa Fe'].includes(model)) {
-          result.carBrand = 'Hyundai';
-        } else if (['Rio', 'K5', 'Sportage', 'Sorento'].includes(model)) {
-          result.carBrand = 'Kia';
-        } else if (['R4', 'R3'].includes(model)) {
-          result.carBrand = 'Ravon';
+        const modelToBrand: Record<string, string> = {
+          // Chevrolet
+          'Gentra': 'Chevrolet', 'Lacetti': 'Chevrolet', 'Malibu': 'Chevrolet', 'Cobalt': 'Chevrolet',
+          'Nexia': 'Chevrolet', 'Matiz': 'Chevrolet', 'Spark': 'Chevrolet', 'Damas': 'Chevrolet',
+          'Labo': 'Chevrolet', 'Captiva': 'Chevrolet', 'Tracker': 'Chevrolet', 'Equinox': 'Chevrolet',
+          'Tahoe': 'Chevrolet', 'Traverse': 'Chevrolet', 'Trailblazer': 'Chevrolet', 'Onix': 'Chevrolet',
+          'Monza': 'Chevrolet', 'Orlando': 'Chevrolet', 'Epica': 'Chevrolet', 'Aveo': 'Chevrolet', 'Cruze': 'Chevrolet',
+          // Toyota
+          'Camry': 'Toyota', 'Corolla': 'Toyota', 'RAV4': 'Toyota', 'Land Cruiser': 'Toyota',
+          'Prado': 'Toyota', 'Highlander': 'Toyota', 'Fortuner': 'Toyota', 'Hilux': 'Toyota',
+          'Yaris': 'Toyota', 'Crown': 'Toyota', 'Alphard': 'Toyota',
+          // Hyundai
+          'Sonata': 'Hyundai', 'Tucson': 'Hyundai', 'Accent': 'Hyundai', 'Elantra': 'Hyundai',
+          'Santa Fe': 'Hyundai', 'Creta': 'Hyundai', 'Palisade': 'Hyundai', 'Grandeur': 'Hyundai',
+          // Kia
+          'Rio': 'Kia', 'K5': 'Kia', 'K3': 'Kia', 'Cerato': 'Kia', 'Sportage': 'Kia',
+          'Sorento': 'Kia', 'Seltos': 'Kia', 'Carnival': 'Kia',
+          // Ravon
+          'R4': 'Ravon', 'R3': 'Ravon', 'R2': 'Ravon',
+          // Lada
+          'Vesta': 'Lada', 'Granta': 'Lada', 'Niva': 'Lada', 'Priora': 'Lada', 'Largus': 'Lada',
+          // BYD
+          'Song Plus': 'BYD', 'Song': 'BYD', 'Han': 'BYD', 'Tang': 'BYD', 'Qin': 'BYD',
+          'Seal': 'BYD', 'Dolphin': 'BYD', 'Atto 3': 'BYD',
+          // Geely
+          'Monjaro': 'Geely', 'Coolray': 'Geely', 'Atlas': 'Geely', 'Emgrand': 'Geely',
+          // Chery
+          'Tiggo 4': 'Chery', 'Tiggo 7': 'Chery', 'Tiggo 8': 'Chery', 'Tiggo': 'Chery', 'Arrizo': 'Chery',
+          // Haval
+          'Jolion': 'Haval', 'H6': 'Haval', 'F7': 'Haval', 'Dargo': 'Haval',
+          // Jetour
+          'X70': 'Jetour', 'Dashing': 'Jetour', 'T2': 'Jetour',
+          // Changan
+          'CS35': 'Changan', 'CS55': 'Changan', 'CS75': 'Changan', 'UNI-T': 'Changan', 'UNI-V': 'Changan',
+          // Exeed
+          'VX': 'Exeed', 'LX': 'Exeed', 'TXL': 'Exeed',
+          // Mercedes
+          'E-Class': 'Mercedes', 'C-Class': 'Mercedes', 'S-Class': 'Mercedes',
+          'GLE': 'Mercedes', 'GLC': 'Mercedes', 'Sprinter': 'Mercedes',
+          // BMW
+          'X5': 'BMW', 'X3': 'BMW', 'X7': 'BMW',
+          // Nissan
+          'Pathfinder': 'Nissan', 'X-Trail': 'Nissan', 'Qashqai': 'Nissan',
+          // Renault
+          'Duster': 'Renault', 'Logan': 'Renault',
+          // VW
+          'Polo': 'Volkswagen', 'Tiguan': 'Volkswagen', 'Jetta': 'Volkswagen', 'Passat': 'Volkswagen',
+          // Ford
+          'Focus': 'Ford',
+          // Mitsubishi
+          'Outlander': 'Mitsubishi',
+          // Mazda
+          'CX-5': 'Mazda',
+        };
+        if (modelToBrand[model]) {
+          result.carBrand = modelToBrand[model];
         }
       }
       break;
