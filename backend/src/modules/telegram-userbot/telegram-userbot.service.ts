@@ -297,8 +297,8 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     const rawChatId = message.chatId?.toString();
     if (!rawChatId) return;
 
-    // Debug: har bir xabarni log qilish
-    this.logger.debug(`MSG from chat ${rawChatId}: ${text.substring(0, 80)}`);
+    // Har bir xabarni log qilish
+    this.logger.log(`MSG from chat ${rawChatId}: ${text.substring(0, 60)}`);
 
     // Monitored guruhga tegishli ekanini tekshirish
     const group = groups.find(g => {
