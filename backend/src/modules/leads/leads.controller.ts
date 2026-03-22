@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { Response } from 'express';
 import { LeadsService } from './leads.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
@@ -27,37 +28,44 @@ export class LeadsController {
   }
 
   @Get('kanban')
-  @ApiOperation({ summary: 'Get leads grouped by status (for Kanban board)' })
   findByStatus() {
     return this.leadsService.findByStatus();
   }
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get lead statistics' })
   getStats() {
     return this.leadsService.getStats();
   }
 
+  @Get('export/excel')
+  @ApiOperation({ summary: 'Export leads to Excel' })
+  async exportExcel(@Query() query: QueryLeadDto, @Res() res: Response) {
+    const buffer = await this.leadsService.exportToExcel(query);
+    const date = new Date().toISOString().split('T')[0];
+    const city = query.city ? `_${query.city}` : '';
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename=leads${city}_${date}.xlsx`,
+    });
+    res.send(buffer);
+  }
+
   @Get(':id')
-  @ApiOperation({ summary: 'Get lead by ID with full details' })
   findOne(@Param('id') id: string) {
     return this.leadsService.findOne(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update lead' })
   update(@Param('id') id: string, @Body() dto: UpdateLeadDto, @Req() req: any) {
     return this.leadsService.update(id, dto, req.user.id);
   }
 
   @Post(':id/notes')
-  @ApiOperation({ summary: 'Add note to lead' })
   addNote(@Param('id') id: string, @Body() dto: AddNoteDto, @Req() req: any) {
     return this.leadsService.addNote(id, dto, req.user.id);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete lead' })
   remove(@Param('id') id: string) {
     return this.leadsService.remove(id);
   }

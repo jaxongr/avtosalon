@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadDto } from './dto/update-lead.dto';
 import { QueryLeadDto } from './dto/query-lead.dto';
+import * as ExcelJS from 'exceljs';
 import { AddNoteDto } from './dto/add-note.dto';
 import { LeadStatus, LeadSource } from '@prisma/client';
 
@@ -200,5 +201,113 @@ export class LeadsService {
     await this.findOne(id);
     await this.prisma.lead.delete({ where: { id } });
     return { message: 'Lead deleted' };
+  }
+
+  async exportToExcel(query: QueryLeadDto): Promise<Buffer> {
+    const { status, source, city, search, dateFrom, dateTo } = query;
+    const where: any = {};
+    if (status) where.status = status;
+    if (source) where.source = source;
+    if (city) where.city = city;
+    if (search) {
+      where.OR = [
+        { phone: { contains: search } },
+        { name: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+    if (dateFrom || dateTo) {
+      where.createdAt = {};
+      if (dateFrom) where.createdAt.gte = new Date(dateFrom);
+      if (dateTo) where.createdAt.lte = new Date(dateTo);
+    }
+
+    const leads = await this.prisma.lead.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { manager: { select: { fullName: true } } },
+    });
+
+    const workbook = new ExcelJS.Workbook();
+
+    // Umumiy varaq
+    const allSheet = workbook.addWorksheet('Barcha Leadlar');
+    allSheet.columns = [
+      { header: 'Telefon', key: 'phone', width: 16 },
+      { header: 'Ism', key: 'name', width: 18 },
+      { header: 'Shahar', key: 'city', width: 14 },
+      { header: 'Mashina', key: 'car', width: 25 },
+      { header: 'Narx', key: 'carPrice', width: 14 },
+      { header: 'Yil', key: 'carYear', width: 8 },
+      { header: 'Rang', key: 'carColor', width: 10 },
+      { header: 'KPP', key: 'carTransmission', width: 10 },
+      { header: 'Yoqilgi', key: 'carFuel', width: 10 },
+      { header: 'Probeg', key: 'carMileage', width: 12 },
+      { header: 'Status', key: 'status', width: 12 },
+      { header: 'Manba guruh', key: 'sourceGroup', width: 22 },
+      { header: 'Yuboruvchi', key: 'sender', width: 20 },
+      { header: 'Menejer', key: 'manager', width: 16 },
+      { header: 'Sana', key: 'date', width: 18 },
+      { header: 'Xabar', key: 'message', width: 40 },
+    ];
+
+    // Header style
+    allSheet.getRow(1).font = { bold: true };
+    allSheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF6B46C1' } };
+    allSheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+    for (const lead of leads) {
+      allSheet.addRow({
+        phone: lead.phone,
+        name: lead.name || '',
+        city: lead.city || '',
+        car: [lead.carBrand, lead.carModel].filter(Boolean).join(' ') || '',
+        carPrice: lead.carPrice || '',
+        carYear: lead.carYear || '',
+        carColor: lead.carColor || '',
+        carTransmission: lead.carTransmission || '',
+        carFuel: lead.carFuel || '',
+        carMileage: lead.carMileage || '',
+        status: lead.status,
+        sourceGroup: lead.sourceGroup || '',
+        sender: [lead.senderName, lead.senderUsername ? `@${lead.senderUsername}` : ''].filter(Boolean).join(' '),
+        manager: (lead as any).manager?.fullName || '',
+        date: lead.createdAt.toLocaleString('uz-UZ'),
+        message: lead.sourceMessage || '',
+      });
+    }
+
+    // Shahar bo'yicha alohida varaqlar
+    const cities = [...new Set(leads.map(l => l.city).filter(Boolean))] as string[];
+    for (const c of cities) {
+      const cityLeads = leads.filter(l => l.city === c);
+      const sheet = workbook.addWorksheet(c);
+      sheet.columns = allSheet.columns.map(col => ({ ...col }));
+      sheet.getRow(1).font = { bold: true };
+      sheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2DD4A8' } };
+      sheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+
+      for (const lead of cityLeads) {
+        sheet.addRow({
+          phone: lead.phone,
+          name: lead.name || '',
+          city: lead.city || '',
+          car: [lead.carBrand, lead.carModel].filter(Boolean).join(' ') || '',
+          carPrice: lead.carPrice || '',
+          carYear: lead.carYear || '',
+          carColor: lead.carColor || '',
+          carTransmission: lead.carTransmission || '',
+          carFuel: lead.carFuel || '',
+          carMileage: lead.carMileage || '',
+          status: lead.status,
+          sourceGroup: lead.sourceGroup || '',
+          sender: [lead.senderName, lead.senderUsername ? `@${lead.senderUsername}` : ''].filter(Boolean).join(' '),
+          manager: (lead as any).manager?.fullName || '',
+          date: lead.createdAt.toLocaleString('uz-UZ'),
+          message: lead.sourceMessage || '',
+        });
+      }
+    }
+
+    return Buffer.from(await workbook.xlsx.writeBuffer());
   }
 }
