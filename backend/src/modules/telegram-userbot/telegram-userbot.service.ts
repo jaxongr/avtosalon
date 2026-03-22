@@ -97,13 +97,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       const dialogs = await this.client.getDialogs({ limit: 500 });
       this.logger.log(`Dialogs fetched: ${dialogs.length} chats loaded for updates`);
 
-      // O'tib ketgan xabarlarni olish
-      try {
-        await this.client.catchUp();
-        this.logger.log('CatchUp complete - missed updates processed');
-      } catch (e) {
-        this.logger.warn(`CatchUp failed: ${(e as any).message}`);
-      }
 
       this.isConnected = true;
       await this.setupMessageHandler();
