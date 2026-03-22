@@ -11,6 +11,7 @@ import GroupsPage from './pages/GroupsPage';
 import UsersPage from './pages/UsersPage';
 import StatisticsPage from './pages/StatisticsPage';
 import CallbacksPage from './pages/CallbacksPage';
+import TelegramPage from './pages/TelegramPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
@@ -38,6 +39,7 @@ export default function App() {
                   <Route path="/users" element={<UsersPage />} />
                   <Route path="/statistics" element={<StatisticsPage />} />
                   <Route path="/callbacks" element={<CallbacksPage />} />
+                  <Route path="/telegram" element={<TelegramPage />} />
                 </Routes>
               </MainLayout>
             </ProtectedRoute>

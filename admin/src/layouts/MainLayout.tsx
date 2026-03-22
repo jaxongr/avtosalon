@@ -4,7 +4,7 @@ import { Layout, Menu, Avatar, Dropdown, Typography } from 'antd';
 import {
   DashboardOutlined, TeamOutlined, CarOutlined, MessageOutlined,
   WechatWorkOutlined, UserOutlined, BarChartOutlined, LogoutOutlined,
-  PhoneOutlined, MenuFoldOutlined, MenuUnfoldOutlined,
+  PhoneOutlined, MenuFoldOutlined, MenuUnfoldOutlined, ApiOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -18,6 +18,7 @@ const menuItems = [
   { key: '/groups', icon: <WechatWorkOutlined />, label: 'Guruhlar' },
   { key: '/callbacks', icon: <PhoneOutlined />, label: 'Callback' },
   { key: '/statistics', icon: <BarChartOutlined />, label: 'Statistika' },
+  { key: '/telegram', icon: <ApiOutlined />, label: 'Telegram' },
   { key: '/users', icon: <UserOutlined />, label: 'Foydalanuvchilar' },
 ];
 
