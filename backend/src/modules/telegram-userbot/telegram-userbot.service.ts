@@ -7,7 +7,7 @@ import { SmsService } from '../sms/sms.service';
 import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
 import { LeadSource } from '@prisma/client';
 
-import { TelegramClient } from 'telegram';
+import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
 
@@ -77,11 +77,11 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       await this.authClient.connect();
 
       const result = await this.authClient.invoke(
-        new (await import('telegram/tl')).Api.auth.SendCode({
+        new Api.auth.SendCode({
           phoneNumber: phone,
           apiId: this.apiId,
           apiHash: this.apiHash,
-          settings: new (await import('telegram/tl')).Api.CodeSettings({}),
+          settings: new Api.CodeSettings({}),
         }),
       );
 
@@ -100,8 +100,6 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const { Api } = await import('telegram/tl');
-
       try {
         await this.authClient.invoke(
           new Api.auth.SignIn({
@@ -112,13 +110,9 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
         );
       } catch (err: any) {
         if (err.errorMessage === 'SESSION_PASSWORD_NEEDED' && password) {
-          const passwordResult = await this.authClient.invoke(
-            new Api.account.GetPassword(),
-          );
-          const srpResult = await this.authClient.invoke(
-            new Api.auth.CheckPassword({
-              password: await this.authClient._computeCheck(passwordResult, password),
-            } as any),
+          await this.authClient.signInWithPassword(
+            { apiId: this.apiId, apiHash: this.apiHash },
+            { password: async () => password, onError: async (e: any) => { throw e; return true; } } as any,
           );
         } else if (err.errorMessage === 'SESSION_PASSWORD_NEEDED') {
           return { success: false, message: '2FA parol kerak', requires2FA: true };
