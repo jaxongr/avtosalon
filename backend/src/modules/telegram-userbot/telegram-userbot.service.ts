@@ -64,12 +64,16 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       const session = new StringSession(sessionString);
       this.client = new TelegramClient(session, this.apiId, this.apiHash, {
         connectionRetries: 5,
+        autoReconnect: true,
       });
 
       await this.client.connect();
-      this.isConnected = true;
-      this.logger.log('Telegram userbot connected');
 
+      // getMe() ni chaqirib session'ni to'liq aktivlashtirish
+      const me = await this.client.getMe();
+      this.logger.log(`Userbot connected as: ${(me as any).firstName || (me as any).username}`);
+
+      this.isConnected = true;
       await this.setupMessageHandler();
     } catch (error) {
       this.logger.error(`Userbot connection failed: ${error.message}`);
@@ -284,9 +288,9 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
       }
     };
 
-    // gramjs event handler - barcha incoming xabarlarni tinglash
-    this.client.addEventHandler(this.messageHandler, new NewMessage({}));
-    this.logger.log('Event handler registered for all chats');
+    // gramjs event handler
+    this.client.addEventHandler(this.messageHandler, new NewMessage({ incoming: true }));
+    this.logger.log('Event handler registered (incoming messages)');
   }
 
   private async handleNewMessage(event: NewMessageEvent, groups: any[]) {
