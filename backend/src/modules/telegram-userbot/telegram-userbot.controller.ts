@@ -65,4 +65,10 @@ export class TelegramUserbotController {
   refreshMonitoring() {
     return this.userbotService.refreshMonitoring();
   }
+
+  @Post('add-all-groups')
+  @ApiOperation({ summary: 'Add all groups/channels to monitoring' })
+  addAllGroups() {
+    return this.userbotService.addAllGroupsToMonitoring();
+  }
 }

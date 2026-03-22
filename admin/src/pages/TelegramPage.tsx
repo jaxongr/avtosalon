@@ -12,6 +12,7 @@ const userbotApi = {
     client.post('/telegram-userbot/verify-code', data),
   getMyGroups: () => client.get('/telegram-userbot/my-groups'),
   refresh: () => client.post('/telegram-userbot/refresh'),
+  addAllGroups: () => client.post('/telegram-userbot/add-all-groups'),
 };
 
 export default function TelegramPage() {
@@ -82,6 +83,16 @@ export default function TelegramPage() {
     onSuccess: () => message.success('Monitoring yangilandi'),
   });
 
+  const addAllMutation = useMutation({
+    mutationFn: () => userbotApi.addAllGroups(),
+    onSuccess: (res) => {
+      message.success(res.data.message);
+      qc.invalidateQueries({ queryKey: ['groups'] });
+      qc.invalidateQueries({ queryKey: ['my-groups'] });
+    },
+    onError: (e: any) => message.error(e.response?.data?.message || 'Xatolik'),
+  });
+
   const monitoredIds = new Set(monitoredGroups?.map((g: any) => g.telegramId) || []);
 
   return (
@@ -141,8 +152,10 @@ export default function TelegramPage() {
           {status?.connected && (
             <Card title="Sizning guruhlaringiz" extra={
               <Space>
-                <Button icon={<ReloadOutlined />} onClick={() => qc.invalidateQueries({ queryKey: ['my-groups'] })}>Yangilash</Button>
-                <Button type="primary" icon={<ReloadOutlined />} onClick={() => refreshMutation.mutate()} loading={refreshMutation.isPending}>
+                <Button type="primary" danger onClick={() => addAllMutation.mutate()} loading={addAllMutation.isPending}>
+                  Hammasini qo'shish
+                </Button>
+                <Button icon={<ReloadOutlined />} onClick={() => refreshMutation.mutate()} loading={refreshMutation.isPending}>
                   Monitoringni yangilash
                 </Button>
               </Space>

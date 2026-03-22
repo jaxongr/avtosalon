@@ -202,6 +202,49 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  // === ADD ALL GROUPS TO MONITORING ===
+
+  async addAllGroupsToMonitoring() {
+    if (!this.client || !this.isConnected) {
+      return { success: false, message: 'Userbot ulanmagan' };
+    }
+
+    const result = await this.getMyGroups();
+    if (!result.success) return result;
+
+    let added = 0;
+    let skipped = 0;
+    const defaultKeywords = ['sotiladi', 'mashina', 'avto', 'sotuv', 'sotaman', 'narx', 'narxi', 'продам', 'продаю', 'машина', 'авто'];
+
+    for (const group of result.groups) {
+      try {
+        const existing = await this.prisma.monitoredGroup.findUnique({
+          where: { telegramId: group.id },
+        });
+        if (existing) {
+          skipped++;
+          continue;
+        }
+        await this.prisma.monitoredGroup.create({
+          data: {
+            telegramId: group.id,
+            title: group.title,
+            keywords: defaultKeywords,
+            isActive: true,
+          },
+        });
+        added++;
+      } catch {
+        skipped++;
+      }
+    }
+
+    // Monitoringni qayta boshlash
+    await this.setupMessageHandler();
+
+    return { success: true, message: `${added} ta guruh qo'shildi, ${skipped} ta o'tkazib yuborildi`, added, skipped };
+  }
+
   // === REFRESH MONITORING ===
 
   async refreshMonitoring() {
@@ -247,7 +290,9 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
 
   private async handleNewMessage(event: NewMessageEvent, groups: any[]) {
     const message = event.message;
-    if (!message.text) return;
+    // Matn yoki caption (rasmli xabarlarda caption bo'ladi)
+    const text = message.text || message.message || '';
+    if (!text) return;
 
     const rawChatId = message.chatId?.toString();
     if (!rawChatId) return;
@@ -264,12 +309,12 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     if (!group) return;
 
     if (group.keywords && group.keywords.length > 0) {
-      const lowerText = message.text.toLowerCase();
+      const lowerText = text.toLowerCase();
       const hasKeyword = group.keywords.some((kw: string) => lowerText.includes(kw.toLowerCase()));
       if (!hasKeyword) return;
     }
 
-    const phones = message.text.match(this.phoneRegex);
+    const phones = text.match(this.phoneRegex);
     if (!phones || phones.length === 0) return;
 
     this.logger.log(`Found ${phones.length} phone(s) in group "${group.title}"`);
@@ -292,13 +337,13 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
         } catch {}
 
         // Xabar matnidan mashina ma'lumotlarini parse qilish
-        const parsed = parseCarMessage(message.text);
+        const parsed = parseCarMessage(text);
 
         const lead = await this.leadsService.create({
           phone,
           source: LeadSource.TELEGRAM_GROUP,
           sourceGroup: group.title,
-          sourceMessage: message.text.substring(0, 500),
+          sourceMessage: text.substring(0, 500),
           city,
           carBrand: parsed.carBrand || undefined,
           carModel: parsed.carModel || undefined,
