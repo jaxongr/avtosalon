@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Table, Card, Button, Tag, Input, Select, Space, Modal, Form, message, Typography } from 'antd';
+import { Table, Card, Button, Tag, Input, Select, Space, Modal, Form, message, Typography, Image } from 'antd';
 import { PlusOutlined, SearchOutlined, EyeOutlined } from '@ant-design/icons';
+
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://5.189.141.151:4010';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi } from '../api/endpoints';
 
@@ -50,14 +52,22 @@ export default function LeadsPage() {
         </Space>
         <Table loading={isLoading} dataSource={data?.data || []} rowKey="id"
           pagination={{ current: page, total: data?.meta?.total || 0, pageSize: 20, onChange: setPage }}
+          scroll={{ x: 1200 }}
           columns={[
-            { title: 'Telefon', dataIndex: 'phone', width: 150 },
-            { title: 'Ism', dataIndex: 'name', render: (v: string) => v || '-' },
-            { title: 'Status', dataIndex: 'status', render: (s: string) => <Tag color={STATUS_COLORS[s]}>{s}</Tag>, width: 120 },
-            { title: 'Shahar', dataIndex: 'city', render: (v: string) => v ? <Tag color="geekblue">{v}</Tag> : '-', width: 120 },
-            { title: 'Manba', dataIndex: 'source', render: (s: string) => <Tag>{s}</Tag>, width: 140 },
-            { title: 'Menejer', dataIndex: ['manager', 'fullName'], render: (v: string) => v || 'Tayinlanmagan' },
-            { title: 'Sana', dataIndex: 'createdAt', render: (d: string) => new Date(d).toLocaleString('uz-UZ'), width: 160 },
+            { title: 'Rasm', dataIndex: 'carPhotos', width: 70, render: (photos: string[]) =>
+              photos?.[0] ? <Image src={`${API_BASE}${photos[0]}`} width={50} height={40} style={{ objectFit: 'cover', borderRadius: 4 }} /> : '-'
+            },
+            { title: 'Telefon', dataIndex: 'phone', width: 140 },
+            { title: 'Mashina', width: 150, render: (_: any, r: any) =>
+              r.carBrand ? <span><strong>{r.carBrand}</strong> {r.carModel || ''} {r.carYear || ''}</span> : '-'
+            },
+            { title: 'Narx', dataIndex: 'carPrice', width: 100, render: (v: string) => v || '-' },
+            { title: 'Shahar', dataIndex: 'city', render: (v: string) => v ? <Tag color="geekblue">{v}</Tag> : '-', width: 100 },
+            { title: 'Status', dataIndex: 'status', render: (s: string) => <Tag color={STATUS_COLORS[s]}>{s}</Tag>, width: 100 },
+            { title: 'Yuboruvchi', width: 120, render: (_: any, r: any) =>
+              r.senderName || r.senderUsername ? <span>{r.senderName || ''} {r.senderUsername ? `@${r.senderUsername}` : ''}</span> : '-'
+            },
+            { title: 'Sana', dataIndex: 'createdAt', render: (d: string) => new Date(d).toLocaleDateString('uz-UZ'), width: 100 },
             { title: '', width: 50, render: (_: any, record: any) => <Button type="link" icon={<EyeOutlined />} onClick={() => navigate(`/leads/${record.id}`)} /> },
           ]} />
       </Card>

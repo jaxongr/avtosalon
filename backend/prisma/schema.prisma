@@ -105,6 +105,18 @@ model Lead {
   sourceGroup     String?    @map("source_group")
   sourceMessage   String?    @map("source_message") @db.Text
   city            String?
+  carBrand        String?    @map("car_brand")
+  carModel        String?    @map("car_model")
+  carYear         Int?       @map("car_year")
+  carPrice        String?    @map("car_price")
+  carColor        String?    @map("car_color")
+  carMileage      String?    @map("car_mileage")
+  carFuel         String?    @map("car_fuel")
+  carTransmission String?    @map("car_transmission")
+  carDescription  String?    @map("car_description") @db.Text
+  carPhotos       String[]   @map("car_photos")
+  senderUsername  String?    @map("sender_username")
+  senderName     String?    @map("sender_name")
   status          LeadStatus @default(NEW)
   notes           String?    @db.Text
   score           Int        @default(0)

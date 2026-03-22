@@ -7,10 +7,14 @@ import { SmsService } from '../sms/sms.service';
 import { TelegramBotService } from '../telegram-bot/telegram-bot.service';
 import { LeadSource } from '@prisma/client';
 import { detectCity } from '../../common/utils/city-detector';
+import { parseCarMessage } from '../../common/utils/message-parser';
 
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
+import { writeFile, mkdir } from 'fs/promises';
+import { join } from 'path';
+import { v4 as uuid } from 'uuid';
 
 @Injectable()
 export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
@@ -278,13 +282,55 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
 
       try {
         const city = detectCity(group.title);
+        const parsed = parseCarMessage(message.text);
+
+        // Sender ma'lumotlari
+        let senderUsername: string | undefined;
+        let senderName: string | undefined;
+        try {
+          const sender = await message.getSender() as any;
+          if (sender) {
+            senderUsername = sender.username || undefined;
+            senderName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || undefined;
+          }
+        } catch {}
+
+        // Rasmlarni yuklash
+        const carPhotos: string[] = [];
+        try {
+          if (message.media && (message.media as any).photo) {
+            const buffer = await this.client.downloadMedia(message.media, {});
+            if (buffer && Buffer.isBuffer(buffer)) {
+              const uploadDir = join(process.cwd(), 'uploads', 'leads');
+              await mkdir(uploadDir, { recursive: true });
+              const filename = `${uuid()}.jpg`;
+              await writeFile(join(uploadDir, filename), buffer);
+              carPhotos.push(`/uploads/leads/${filename}`);
+            }
+          }
+        } catch (err) {
+          this.logger.debug(`Photo download skipped: ${(err as any).message}`);
+        }
+
         const lead = await this.leadsService.create({
           phone,
           source: LeadSource.TELEGRAM_GROUP,
           sourceGroup: group.title,
           sourceMessage: message.text.substring(0, 500),
           city,
-        });
+          carBrand: parsed.carBrand || undefined,
+          carModel: parsed.carModel || undefined,
+          carYear: parsed.carYear || undefined,
+          carPrice: parsed.carPrice || undefined,
+          carColor: parsed.carColor || undefined,
+          carMileage: parsed.carMileage || undefined,
+          carFuel: parsed.carFuel || undefined,
+          carTransmission: parsed.carTransmission || undefined,
+          carDescription: parsed.carDescription || undefined,
+          carPhotos,
+          senderUsername,
+          senderName,
+        } as any);
 
         await this.monitoredGroupsService.incrementLeadCount(group.telegramId);
 

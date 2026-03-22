@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsOptional, Matches } from 'class-validator';
+import { IsString, IsEnum, IsOptional, IsNumber, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { LeadSource } from '@prisma/client';
 
@@ -32,6 +32,18 @@ export class CreateLeadDto {
   @IsString()
   @IsOptional()
   city?: string;
+
+  @IsString() @IsOptional() carBrand?: string;
+  @IsString() @IsOptional() carModel?: string;
+  @IsNumber() @IsOptional() carYear?: number;
+  @IsString() @IsOptional() carPrice?: string;
+  @IsString() @IsOptional() carColor?: string;
+  @IsString() @IsOptional() carMileage?: string;
+  @IsString() @IsOptional() carFuel?: string;
+  @IsString() @IsOptional() carTransmission?: string;
+  @IsString() @IsOptional() carDescription?: string;
+  @IsString() @IsOptional() senderUsername?: string;
+  @IsString() @IsOptional() senderName?: string;
 
   @ApiProperty({ required: false })
   @IsString()

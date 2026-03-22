@@ -1,5 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Timeline, Button, Select, Input, Space, message, Typography, Row, Col } from 'antd';
+import { Card, Descriptions, Tag, Timeline, Button, Select, Input, Space, message, Typography, Row, Col, Image } from 'antd';
+
+const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://5.189.141.151:4010';
 import { ArrowLeftOutlined, SendOutlined } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi, smsApi, usersApi } from '../api/endpoints';
@@ -67,6 +69,33 @@ export default function LeadDetailPage() {
               </div>
             )}
           </Card>
+
+          {(lead.carBrand || lead.carPhotos?.length > 0) && (
+            <Card title="Mashina ma'lumotlari" style={{ marginTop: 16 }}>
+              {lead.carPhotos?.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <Image.PreviewGroup>
+                    <Space>
+                      {lead.carPhotos.map((p: string, i: number) => (
+                        <Image key={i} src={`${API_BASE}${p}`} width={120} height={90} style={{ objectFit: 'cover', borderRadius: 8 }} />
+                      ))}
+                    </Space>
+                  </Image.PreviewGroup>
+                </div>
+              )}
+              <Descriptions column={2} bordered size="small">
+                {lead.carBrand && <Descriptions.Item label="Brend">{lead.carBrand}</Descriptions.Item>}
+                {lead.carModel && <Descriptions.Item label="Model">{lead.carModel}</Descriptions.Item>}
+                {lead.carYear && <Descriptions.Item label="Yil">{lead.carYear}</Descriptions.Item>}
+                {lead.carPrice && <Descriptions.Item label="Narx">{lead.carPrice}</Descriptions.Item>}
+                {lead.carColor && <Descriptions.Item label="Rang">{lead.carColor}</Descriptions.Item>}
+                {lead.carMileage && <Descriptions.Item label="Probeg">{lead.carMileage}</Descriptions.Item>}
+                {lead.carFuel && <Descriptions.Item label="Yoqilg'i">{lead.carFuel}</Descriptions.Item>}
+                {lead.carTransmission && <Descriptions.Item label="KPP">{lead.carTransmission}</Descriptions.Item>}
+              </Descriptions>
+              {lead.senderName && <div style={{ marginTop: 8 }}><Tag>Yuboruvchi: {lead.senderName} {lead.senderUsername ? `@${lead.senderUsername}` : ''}</Tag></div>}
+            </Card>
+          )}
           <Card title="Amallar" style={{ marginTop: 16 }}>
             <Space direction="vertical" style={{ width: '100%' }}>
               <Space>
