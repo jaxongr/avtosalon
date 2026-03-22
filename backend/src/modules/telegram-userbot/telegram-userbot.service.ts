@@ -12,7 +12,6 @@ import { parseCarMessage } from '../../common/utils/message-parser';
 import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
-import { extractTextFromImage } from '../../common/utils/ocr-reader';
 
 @Injectable()
 export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
@@ -292,25 +291,8 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
           }
         } catch {}
 
-        // OCR: rasmdan matn o'qib mashina ma'lumotini aniqlash
-        let ocrText = '';
-        try {
-          if (message.media && (message.media as any).photo) {
-            const buffer = await this.client.downloadMedia(message.media, {});
-            if (buffer && Buffer.isBuffer(buffer)) {
-              ocrText = await extractTextFromImage(buffer);
-              if (ocrText) {
-                this.logger.log(`OCR text from image: ${ocrText.substring(0, 100)}`);
-              }
-            }
-          }
-        } catch (err) {
-          this.logger.debug(`OCR skipped: ${(err as any).message}`);
-        }
-
-        // Xabar matni + OCR matni birlashtirib parse qilish
-        const fullText = [message.text, ocrText].filter(Boolean).join(' ');
-        const parsed = parseCarMessage(fullText);
+        // Xabar matnidan mashina ma'lumotlarini parse qilish
+        const parsed = parseCarMessage(message.text);
 
         const lead = await this.leadsService.create({
           phone,
