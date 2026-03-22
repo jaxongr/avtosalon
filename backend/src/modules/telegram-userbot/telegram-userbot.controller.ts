@@ -71,4 +71,10 @@ export class TelegramUserbotController {
   addAllGroups() {
     return this.userbotService.addAllGroupsToMonitoring();
   }
+
+  @Post('scrape-history')
+  @ApiOperation({ summary: 'Scrape last 3 days messages from all groups' })
+  scrapeHistory() {
+    return this.userbotService.scrapeHistory(3);
+  }
 }

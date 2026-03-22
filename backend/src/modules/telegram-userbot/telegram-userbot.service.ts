@@ -255,6 +255,133 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
     return { success: true, message: `${added} ta guruh qo'shildi, ${skipped} ta o'tkazib yuborildi`, added, skipped };
   }
 
+  // === SCRAPE HISTORY ===
+
+  async scrapeHistory(days: number = 3) {
+    if (!this.client || !this.isConnected) {
+      return { success: false, message: 'Userbot ulanmagan' };
+    }
+
+    const groups = await this.monitoredGroupsService.findActive();
+    if (groups.length === 0) {
+      return { success: false, message: 'Monitoring guruhlari yo\'q' };
+    }
+
+    const offsetDate = Math.floor(Date.now() / 1000) - (days * 24 * 60 * 60);
+    let totalLeads = 0;
+    let processedGroups = 0;
+
+    this.logger.log(`Scraping ${days} days history from ${groups.length} groups...`);
+
+    for (const group of groups) {
+      if (!group.isActive) continue;
+
+      try {
+        let chatId: any;
+        const gid = group.telegramId;
+        if (gid.startsWith('-100')) {
+          chatId = BigInt(gid);
+        } else {
+          chatId = parseInt(gid);
+        }
+
+        const messages = await this.client.getMessages(chatId, {
+          limit: 200,
+          offsetDate,
+        });
+
+        let groupLeads = 0;
+        for (const msg of messages) {
+          const text = msg.text || msg.message || '';
+          if (!text) continue;
+
+          const phones = text.match(this.phoneRegex) || [];
+          const parsed = parseCarMessage(text);
+          const city = detectCity(group.title);
+
+          let senderUsername: string | undefined;
+          let senderName: string | undefined;
+          try {
+            const sender = await msg.getSender() as any;
+            if (sender) {
+              senderUsername = sender.username || undefined;
+              senderName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || undefined;
+            }
+          } catch {}
+
+          if (phones.length > 0) {
+            const uniquePhones = [...new Set(phones.map((p: string) => p.replace(/[\s\-.]/g, '')))];
+            const mainPhone = uniquePhones[0];
+            const extraPhones = uniquePhones.slice(1);
+
+            try {
+              await this.prisma.lead.create({
+                data: {
+                  phone: mainPhone,
+                  source: LeadSource.TELEGRAM_GROUP,
+                  sourceGroup: group.title,
+                  sourceMessage: text.substring(0, 500),
+                  city,
+                  carBrand: parsed.carBrand,
+                  carModel: parsed.carModel,
+                  carYear: parsed.carYear,
+                  carPrice: parsed.carPrice,
+                  carColor: parsed.carColor,
+                  carMileage: parsed.carMileage,
+                  carFuel: parsed.carFuel,
+                  carTransmission: parsed.carTransmission,
+                  carDescription: parsed.carDescription,
+                  notes: extraPhones.length > 0 ? `Qo'shimcha: ${extraPhones.join(', ')}` : null,
+                  senderUsername,
+                  senderName,
+                },
+              });
+              groupLeads++;
+            } catch {}
+          } else if (parsed.carBrand || parsed.carModel || parsed.carPrice) {
+            try {
+              await this.prisma.lead.create({
+                data: {
+                  phone: 'UNKNOWN',
+                  source: LeadSource.TELEGRAM_GROUP,
+                  sourceGroup: group.title,
+                  sourceMessage: text.substring(0, 500),
+                  city,
+                  carBrand: parsed.carBrand,
+                  carModel: parsed.carModel,
+                  carYear: parsed.carYear,
+                  carPrice: parsed.carPrice,
+                  carColor: parsed.carColor,
+                  carMileage: parsed.carMileage,
+                  carFuel: parsed.carFuel,
+                  carTransmission: parsed.carTransmission,
+                  carDescription: parsed.carDescription,
+                  senderUsername,
+                  senderName,
+                },
+              });
+              groupLeads++;
+            } catch {}
+          }
+        }
+
+        totalLeads += groupLeads;
+        processedGroups++;
+        if (groupLeads > 0) {
+          this.logger.log(`Scraped "${group.title}": ${groupLeads} leads from ${messages.length} messages`);
+        }
+
+        // Rate limit - guruhlar orasida 1 soniya kutish
+        await new Promise(r => setTimeout(r, 1000));
+      } catch (error) {
+        this.logger.error(`Scrape error for "${group.title}": ${(error as any).message}`);
+      }
+    }
+
+    this.logger.log(`Scrape complete: ${totalLeads} leads from ${processedGroups} groups`);
+    return { success: true, message: `${totalLeads} ta lead yig'ildi ${processedGroups} ta guruhdan`, totalLeads, processedGroups };
+  }
+
   // === REFRESH MONITORING ===
 
   async refreshMonitoring() {

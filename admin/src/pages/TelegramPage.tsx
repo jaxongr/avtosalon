@@ -13,6 +13,7 @@ const userbotApi = {
   getMyGroups: () => client.get('/telegram-userbot/my-groups'),
   refresh: () => client.post('/telegram-userbot/refresh'),
   addAllGroups: () => client.post('/telegram-userbot/add-all-groups'),
+  scrapeHistory: () => client.post('/telegram-userbot/scrape-history'),
 };
 
 export default function TelegramPage() {
@@ -81,6 +82,15 @@ export default function TelegramPage() {
   const refreshMutation = useMutation({
     mutationFn: () => userbotApi.refresh(),
     onSuccess: () => message.success('Monitoring yangilandi'),
+  });
+
+  const scrapeMutation = useMutation({
+    mutationFn: () => userbotApi.scrapeHistory(),
+    onSuccess: (res) => {
+      message.success(res.data.message);
+      qc.invalidateQueries({ queryKey: ['leads'] });
+    },
+    onError: (e: any) => message.error(e.response?.data?.message || 'Xatolik'),
   });
 
   const addAllMutation = useMutation({
@@ -152,11 +162,14 @@ export default function TelegramPage() {
           {status?.connected && (
             <Card title="Sizning guruhlaringiz" extra={
               <Space>
+                <Button type="primary" onClick={() => scrapeMutation.mutate()} loading={scrapeMutation.isPending}>
+                  3 kunlik tarix yig'ish
+                </Button>
                 <Button type="primary" danger onClick={() => addAllMutation.mutate()} loading={addAllMutation.isPending}>
                   Hammasini qo'shish
                 </Button>
                 <Button icon={<ReloadOutlined />} onClick={() => refreshMutation.mutate()} loading={refreshMutation.isPending}>
-                  Monitoringni yangilash
+                  Yangilash
                 </Button>
               </Space>
             }>
