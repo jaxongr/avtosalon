@@ -30,11 +30,14 @@ export class SemySmsClient implements OnModuleInit {
       const response = await fetch(url);
       const data = await response.json();
 
-      if (data.code === 0 && data.list && data.list.length > 0) {
-        // Birinchi aktiv device ni olish
-        const activeDevice = data.list.find((d: any) => d.is_online === 1) || data.list[0];
+      const devices = data.data || data.list || [];
+      if (data.code === 0 && devices.length > 0) {
+        // Aktiv, arxivlanmagan, online device ni tanlash
+        const activeDevice = devices.find((d: any) => d.is_arhive === 0 && d.power === 1)
+          || devices.find((d: any) => d.is_arhive === 0)
+          || devices[0];
         this.device = activeDevice.id.toString();
-        this.logger.log(`SemySMS device auto-detected: ${this.device} (${activeDevice.title || activeDevice.phone})`);
+        this.logger.log(`SemySMS device: ${this.device} (${activeDevice.device_name} ${activeDevice.dop_name || ''} - ${activeDevice.mobile_operator})`);
       } else {
         this.logger.warn('No SemySMS devices found');
       }
@@ -77,7 +80,7 @@ export class SemySmsClient implements OnModuleInit {
       const url = `https://semysms.net/api/3/devices.php?token=${this.token}`;
       const response = await fetch(url);
       const data = await response.json();
-      return { success: true, devices: data.list || [], activeDevice: this.device };
+      return { success: true, devices: data.data || data.list || [], activeDevice: this.device };
     } catch (error) {
       return { success: false, devices: [], error: (error as any).message };
     }
