@@ -23,6 +23,8 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
 
   private authClient: TelegramClient | null = null;
   private authPhoneCodeHash: string | null = null;
+  private messageHandler: ((event: NewMessageEvent) => Promise<void>) | null = null;
+  private monitoredGroups: any[] = [];
 
   private readonly phoneRegex = /\+998[\s\-.]?\d{2}[\s\-.]?\d{3}[\s\-.]?\d{2}[\s\-.]?\d{2}/g;
 
@@ -259,54 +261,64 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
   // === MESSAGE HANDLERS ===
 
   private async setupMessageHandler() {
-    const groups = await this.monitoredGroupsService.findActive();
-    if (groups.length === 0) {
+    // Oldingi handler'ni olib tashlash
+    if (this.messageHandler) {
+      this.client.removeEventHandler(this.messageHandler, new NewMessage({}));
+      this.messageHandler = null;
+    }
+
+    this.monitoredGroups = await this.monitoredGroupsService.findActive();
+    if (this.monitoredGroups.length === 0) {
       this.logger.warn('No active monitored groups found');
       return;
     }
 
-    // Convert IDs to numbers for gramjs (remove -100 prefix for channels)
-    const chatIds = groups.map(g => {
-      const id = g.telegramId;
-      if (id.startsWith('-100')) return BigInt(id);
-      if (id.startsWith('-')) return parseInt(id);
-      return parseInt(id);
-    }).filter(id => id !== 0 && !isNaN(Number(id)));
+    this.logger.log(`Monitoring ${this.monitoredGroups.length} groups`);
 
-    this.logger.log(`Monitoring ${groups.length} groups: ${groups.map(g => g.title).join(', ')}`);
+    // Yangi handler yaratish
+    this.messageHandler = async (event: NewMessageEvent) => {
+      try {
+        await this.handleNewMessage(event, this.monitoredGroups);
+      } catch (error) {
+        this.logger.error(`Message handler error: ${error.message}`);
+      }
+    };
 
-    // Listen to ALL messages if chats list has issues
-    this.client.addEventHandler(
-      async (event: NewMessageEvent) => {
-        try {
-          await this.handleNewMessage(event, groups);
-        } catch (error) {
-          this.logger.error(`Message handler error: ${error.message}`);
-        }
-      },
-      new NewMessage({}),
-    );
+    // gramjs event handler - barcha incoming xabarlarni tinglash
+    this.client.addEventHandler(this.messageHandler, new NewMessage({}));
+    this.logger.log('Event handler registered for all chats');
   }
 
   private async handleNewMessage(event: NewMessageEvent, groups: any[]) {
     const message = event.message;
-    // Matn yoki caption (rasmli xabarlarda caption bo'ladi)
     const text = message.text || message.message || '';
     if (!text) return;
 
     const rawChatId = message.chatId?.toString();
     if (!rawChatId) return;
 
-    // Match chat ID in various formats: raw, -100prefix, negative
+    // Debug: har bir xabarni log qilish
+    this.logger.debug(`MSG from chat ${rawChatId}: ${text.substring(0, 80)}`);
+
+    // Monitored guruhga tegishli ekanini tekshirish
     const group = groups.find(g => {
       const gid = g.telegramId;
-      return gid === rawChatId
-        || gid === `-100${rawChatId}`
-        || gid === `-${rawChatId}`
-        || (gid.startsWith('-100') && gid.substring(4) === rawChatId)
-        || (gid.startsWith('-') && gid.substring(1) === rawChatId);
+      // Barcha formatlarni solishtirish
+      if (gid === rawChatId) return true;
+      if (gid === `-100${rawChatId}`) return true;
+      if (gid === `-${rawChatId}`) return true;
+      // gid = -1001234, rawChatId = 1234
+      const gidNum = gid.replace(/^-100/, '').replace(/^-/, '');
+      if (gidNum === rawChatId) return true;
+      return false;
     });
-    if (!group) return;
+
+    if (!group) {
+      // Guruh topilmadi - bu chat monitoring ro'yxatida yo'q
+      return;
+    }
+
+    this.logger.log(`Message matched group "${group.title}" (${rawChatId})`);
 
     if (group.keywords && group.keywords.length > 0) {
       const lowerText = text.toLowerCase();
