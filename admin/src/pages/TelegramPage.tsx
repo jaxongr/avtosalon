@@ -69,7 +69,7 @@ export default function TelegramPage() {
     mutationFn: (group: any) => groupsApi.create({
       telegramId: group.id,
       title: group.title,
-      keywords: ['sotiladi', 'mashina', 'avto', 'sotuv'],
+      keywords: [],
     }),
     onSuccess: () => {
       message.success('Guruh monitoring ro\'yxatiga qo\'shildi!');

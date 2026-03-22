@@ -224,7 +224,7 @@ export class TelegramUserbotService implements OnModuleInit, OnModuleDestroy {
 
     let added = 0;
     let skipped = 0;
-    const defaultKeywords = ['sotiladi', 'mashina', 'avto', 'sotuv', 'sotaman', 'narx', 'narxi', 'продам', 'продаю', 'машина', 'авто'];
+    const defaultKeywords: string[] = [];
 
     for (const group of result.groups) {
       try {
