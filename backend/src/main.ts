@@ -1,38 +1,27 @@
 import { NestFactory } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { globalValidationPipe } from './common/pipes/validation.pipe';
-import helmet from 'helmet';
-import compression from 'compression';
-import { NestExpressApplication } from '@nestjs/platform-express';
-import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads/' });
+  app.enableCors();
   app.setGlobalPrefix('api');
-  app.useGlobalPipes(globalValidationPipe);
-  app.useGlobalFilters(new AllExceptionsFilter());
-  app.use(helmet({ crossOriginResourcePolicy: false }));
-  app.use(compression());
-  app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://5.189.141.151:8082', 'http://5.189.141.151:8083'],
-    credentials: true,
-  });
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
   const config = new DocumentBuilder()
-    .setTitle('Avtosalon CRM API')
-    .setDescription('Lead Generation & CRM System')
+    .setTitle('Avtosalon Lead Collector')
+    .setDescription('Telegram guruh/kanal monitoring va lead yig\'ish')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT || 3000;
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port);
   console.log(`Server running on http://localhost:${port}`);
   console.log(`Swagger docs at http://localhost:${port}/api/docs`);
 }

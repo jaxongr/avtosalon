@@ -1,19 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto';
 
 @Injectable()
 export class MonitoredGroupsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateGroupDto) {
-    return this.prisma.monitoredGroup.create({ data: dto });
-  }
-
   async findAll() {
     return this.prisma.monitoredGroup.findMany({
-      orderBy: { createdAt: 'desc' },
+      orderBy: { leadsCount: 'desc' },
+      include: { _count: { select: { leads: true } } },
     });
   }
 
@@ -23,30 +18,40 @@ export class MonitoredGroupsService {
     });
   }
 
-  async findOne(id: string) {
-    const group = await this.prisma.monitoredGroup.findUnique({ where: { id } });
-    if (!group) throw new NotFoundException('Group not found');
-    return group;
+  async addGroup(data: { telegramId: string; title: string; type?: string }) {
+    return this.prisma.monitoredGroup.upsert({
+      where: { telegramId: data.telegramId },
+      create: { telegramId: data.telegramId, title: data.title, type: data.type || 'GROUP' },
+      update: { title: data.title },
+    });
   }
 
-  async update(id: string, dto: UpdateGroupDto) {
-    await this.findOne(id);
-    return this.prisma.monitoredGroup.update({ where: { id }, data: dto });
+  async update(id: string, data: { title?: string; isActive?: boolean }) {
+    return this.prisma.monitoredGroup.update({ where: { id }, data });
   }
 
   async remove(id: string) {
-    await this.findOne(id);
-    await this.prisma.monitoredGroup.delete({ where: { id } });
-    return { message: 'Group deleted' };
+    return this.prisma.monitoredGroup.delete({ where: { id } });
   }
 
   async incrementLeadCount(telegramId: string) {
-    await this.prisma.monitoredGroup.updateMany({
+    await this.prisma.monitoredGroup.update({
       where: { telegramId },
-      data: {
-        leadsCount: { increment: 1 },
-        lastChecked: new Date(),
-      },
-    });
+      data: { leadsCount: { increment: 1 } },
+    }).catch(() => {});
+  }
+
+  async updateLastMessage(telegramId: string, msgId: number) {
+    await this.prisma.monitoredGroup.update({
+      where: { telegramId },
+      data: { lastMessageId: msgId, lastMessageAt: new Date() },
+    }).catch(() => {});
+  }
+
+  async updateLastScraped(telegramId: string) {
+    await this.prisma.monitoredGroup.update({
+      where: { telegramId },
+      data: { lastScrapedAt: new Date() },
+    }).catch(() => {});
   }
 }

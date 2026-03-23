@@ -1,47 +1,33 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MonitoredGroupsService } from './monitored-groups.service';
-import { CreateGroupDto } from './dto/create-group.dto';
-import { UpdateGroupDto } from './dto/update-group.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../../common/decorators/roles.decorator';
+import { AddGroupDto, UpdateGroupDto } from './dto/add-group.dto';
 
 @ApiTags('Monitored Groups')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('ADMIN')
+@UseGuards(JwtAuthGuard)
 @Controller('monitored-groups')
 export class MonitoredGroupsController {
   constructor(private service: MonitoredGroupsService) {}
 
-  @Post()
-  @ApiOperation({ summary: 'Add a Telegram group to monitor' })
-  create(@Body() dto: CreateGroupDto) {
-    return this.service.create(dto);
-  }
-
   @Get()
-  @ApiOperation({ summary: 'Get all monitored groups' })
-  findAll() {
-    return this.service.findAll();
-  }
+  @ApiOperation({ summary: 'Barcha guruhlar' })
+  findAll() { return this.service.findAll(); }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get group by ID' })
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  @Post()
+  @ApiOperation({ summary: 'Guruh qo\'shish' })
+  add(@Body() dto: AddGroupDto) {
+    return this.service.addGroup(dto);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update group settings' })
+  @ApiOperation({ summary: 'Guruh yangilash' })
   update(@Param('id') id: string, @Body() dto: UpdateGroupDto) {
     return this.service.update(id, dto);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Remove group from monitoring' })
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
-  }
+  @ApiOperation({ summary: 'Guruh o\'chirish' })
+  remove(@Param('id') id: string) { return this.service.remove(id); }
 }
