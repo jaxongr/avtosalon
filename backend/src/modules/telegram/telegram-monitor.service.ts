@@ -7,6 +7,8 @@ import { extractPhones } from '../../common/utils/phone-parser';
 import { parseCarAd } from '../../common/utils/car-parser';
 import { isCarAd } from '../../common/utils/message-filter';
 import { NewMessage, NewMessageEvent } from 'telegram/events';
+import { Raw } from 'telegram/events';
+import { Api } from 'telegram';
 
 @Injectable()
 export class TelegramMonitorService implements OnModuleInit {
@@ -38,8 +40,7 @@ export class TelegramMonitorService implements OnModuleInit {
     this.monitoredGroups = await this.groupsService.findActive();
     this.logger.log(`Monitoring ${this.monitoredGroups.length} groups`);
 
-    // CRITICAL: Empty filter = get ALL messages (groups + channels)
-    // Do NOT use { incoming: true } - it skips channel posts
+    // 1) NewMessage handler — guruhlar uchun
     client.addEventHandler(
       async (event: NewMessageEvent) => {
         try {
@@ -50,8 +51,25 @@ export class TelegramMonitorService implements OnModuleInit {
       },
       new NewMessage({}),
     );
+
+    // 2) Raw handler — kanal xabarlari uchun (UpdateNewChannelMessage)
+    client.addEventHandler(
+      async (update: Api.TypeUpdate) => {
+        try {
+          if (update instanceof Api.UpdateNewChannelMessage) {
+            const msg = update.message;
+            if (msg instanceof Api.Message && msg.message) {
+              await this.handleRawMessage(msg);
+            }
+          }
+        } catch (error) {
+          this.logger.error(`Raw handler error: ${error.message}`);
+        }
+      },
+    );
+
     this.handlerRegistered = true;
-    this.logger.log('Event handler registered (all messages including channels)');
+    this.logger.log('Event handlers registered (NewMessage + Raw channel updates)');
   }
 
   async refreshGroups() {
@@ -64,67 +82,56 @@ export class TelegramMonitorService implements OnModuleInit {
     return this.monitoredGroups.length;
   }
 
+  private async handleRawMessage(msg: Api.Message) {
+    const text = msg.message || '';
+    if (!text) return;
+
+    // Chat ID olish
+    const peer = msg.peerId;
+    let rawChatId = '';
+    if (peer instanceof Api.PeerChannel) {
+      rawChatId = `-100${peer.channelId}`;
+    } else if (peer instanceof Api.PeerChat) {
+      rawChatId = `-${peer.chatId}`;
+    } else {
+      return;
+    }
+
+    await this.processMessage(rawChatId, msg.id, text, msg.out || false);
+  }
+
   private async handleMessage(event: NewMessageEvent) {
     const message = event.message;
     const text = message.text || message.message || '';
     if (!text) return;
-
-    // Skip own outgoing messages
     if (message.out) return;
 
     const rawChatId = message.chatId?.toString();
     if (!rawChatId) return;
 
-    const msgId = message.id;
+    await this.processMessage(rawChatId, message.id, text, false);
+  }
 
-    // Find matching monitored group
+  private async processMessage(rawChatId: string, msgId: number, text: string, isOut: boolean) {
+    if (isOut || !text) return;
+
     const group = this.findGroup(rawChatId);
     if (!group) return;
 
-    // Update group last message timestamp
     await this.groupsService.updateLastMessage(group.telegramId, msgId);
 
-    // Parse car data
     const parsed = parseCarAd(text);
+    if (!isCarAd(text, parsed)) return;
 
-    // Filter: is this a car ad?
-    if (!isCarAd(text, parsed)) {
-      this.logger.debug(`Filtered out (not car ad) from "${group.title}": ${text.substring(0, 50)}`);
-      return;
-    }
-
-    // Extract phones
     const phones = extractPhones(text);
-    if (phones.length === 0) {
-      this.logger.debug(`No phone found in car ad from "${group.title}": ${text.substring(0, 50)}`);
-      return;
-    }
+    if (phones.length === 0) return;
 
-    this.logger.log(`MSG [${group.title}] phones=${phones.length} brand=${parsed.brand} model=${parsed.model}`);
-
-    // Process first phone as main lead
     const mainPhone = phones[0];
-    const extraPhones = phones.slice(1);
-
-    // Duplicate check: same phone today
     const isDuplicate = await this.leadsService.isDuplicateToday(mainPhone);
-    if (isDuplicate) {
-      this.logger.debug(`Duplicate: ${mainPhone} already exists today`);
-      return;
-    }
+    if (isDuplicate) return;
 
-    // Get sender info
-    let senderName: string | undefined;
-    let senderUsername: string | undefined;
-    try {
-      const sender = await message.getSender() as any;
-      if (sender) {
-        senderUsername = sender.username || undefined;
-        senderName = [sender.firstName, sender.lastName].filter(Boolean).join(' ') || undefined;
-      }
-    } catch {}
+    this.logger.log(`LIVE [${group.title}] ${mainPhone} | ${parsed.brand || ''} ${parsed.model || ''}`);
 
-    // Create lead
     try {
       const lead = await this.leadsService.create({
         phone: mainPhone,
@@ -142,19 +149,13 @@ export class TelegramMonitorService implements OnModuleInit {
         condition: parsed.condition,
         creditAvailable: parsed.creditAvailable,
         city: parsed.city,
-        senderName,
-        senderUsername,
         sourceGroupId: group.id,
         sourceMsgId: msgId,
-        notes: extraPhones.length > 0 ? `Qo'shimcha: ${extraPhones.join(', ')}` : undefined,
+        notes: phones.length > 1 ? `Qo'shimcha: ${phones.slice(1).join(', ')}` : undefined,
       });
 
       await this.groupsService.incrementLeadCount(group.telegramId);
-
-      // Auto-send SMS (fire and forget)
-      this.smsService.autoSendPromo(lead.id).catch(e =>
-        this.logger.error(`SMS error for ${lead.phone}: ${e.message}`),
-      );
+      this.smsService.autoSendPromo(lead.id).catch(() => {});
     } catch (error) {
       this.logger.error(`Lead create error: ${error.message}`);
     }
