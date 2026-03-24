@@ -12,6 +12,7 @@ import { NewMessage, NewMessageEvent } from 'telegram/events';
 export class TelegramMonitorService implements OnModuleInit {
   private readonly logger = new Logger(TelegramMonitorService.name);
   private monitoredGroups: any[] = [];
+  private handlerRegistered = false;
 
   constructor(
     private telegramClient: TelegramClientService,
@@ -26,6 +27,8 @@ export class TelegramMonitorService implements OnModuleInit {
   }
 
   private async setupHandler() {
+    if (this.handlerRegistered) return;
+
     const client = this.telegramClient.getClient();
     if (!client || !this.telegramClient.getIsConnected()) {
       this.logger.warn('Client not connected, handler not registered');
@@ -47,12 +50,17 @@ export class TelegramMonitorService implements OnModuleInit {
       },
       new NewMessage({}),
     );
+    this.handlerRegistered = true;
     this.logger.log('Event handler registered (all messages including channels)');
   }
 
   async refreshGroups() {
     this.monitoredGroups = await this.groupsService.findActive();
     this.logger.log(`Refreshed: monitoring ${this.monitoredGroups.length} groups`);
+
+    // Agar handler hali register bo'lmagan bo'lsa — register qilish
+    await this.setupHandler();
+
     return this.monitoredGroups.length;
   }
 

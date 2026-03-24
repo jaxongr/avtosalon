@@ -38,7 +38,15 @@ export class TelegramController {
     @Body('code') code: string,
     @Body('password') password?: string,
   ) {
-    return this.clientService.verifyCode(phone, code, password);
+    const result = await this.clientService.verifyCode(phone, code, password);
+
+    // Ulangandan keyin avtomatik guruhlarni qo'shish va monitoringni boshlash
+    if (result.success && result.connected) {
+      await this.addAllGroups();
+      await this.monitorService.refreshGroups();
+    }
+
+    return result;
   }
 
   @Post('refresh-groups')
