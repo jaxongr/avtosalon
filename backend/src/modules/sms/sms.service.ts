@@ -121,28 +121,27 @@ export class SmsService {
     const setting = await this.prisma.setting.findUnique({ where: { key: 'sms_enabled' } });
     if (setting?.value !== 'true') return;
 
-    // Bugungi failed SMS'lar — faqat smsSent=false bo'lgan leadlar
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    // Faqat oxirgi 1 soatda yaratilgan, SMS ketmagan leadlar
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
 
     const failedLeads = await this.prisma.lead.findMany({
       where: {
         smsSent: false,
-        createdAt: { gte: todayStart },
-        brand: { not: null }, // faqat mashina e'lonlari
+        createdAt: { gte: oneHourAgo },
+        brand: { not: null },
       },
-      take: 20, // har safar max 20 ta
+      take: 20,
       orderBy: { createdAt: 'desc' },
     });
 
     if (failedLeads.length === 0) return;
 
-    this.logger.log(`Retrying SMS for ${failedLeads.length} leads...`);
+    this.logger.log(`Retrying SMS for ${failedLeads.length} leads (last 1h)...`);
 
     for (const lead of failedLeads) {
       const result = await this.autoSendPromo(lead.id);
-      if (!result.success) break; // device hali offline — to'xtash
-      await new Promise(r => setTimeout(r, 1000)); // 1 sek interval
+      if (!result.success) break;
+      await new Promise(r => setTimeout(r, 1000));
     }
   }
 
