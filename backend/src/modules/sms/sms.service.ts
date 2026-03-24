@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
 import { PrismaService } from '../../prisma/prisma.service';
 import axios from 'axios';
 
@@ -109,6 +110,40 @@ export class SmsService {
       .replace('{name}', lead.senderName || '');
 
     return this.sendSms(leadId, lead.phone, message);
+  }
+
+  /**
+   * Har 5 daqiqada failed SMS'larni qayta yuborish
+   * Device offline bo'lib keyin online bo'lganda — avvalgi failed SMS'lar ketadi
+   */
+  @Cron('*/5 * * * *')
+  async retryFailedSms() {
+    const setting = await this.prisma.setting.findUnique({ where: { key: 'sms_enabled' } });
+    if (setting?.value !== 'true') return;
+
+    // Bugungi failed SMS'lar — faqat smsSent=false bo'lgan leadlar
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const failedLeads = await this.prisma.lead.findMany({
+      where: {
+        smsSent: false,
+        createdAt: { gte: todayStart },
+        brand: { not: null }, // faqat mashina e'lonlari
+      },
+      take: 20, // har safar max 20 ta
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (failedLeads.length === 0) return;
+
+    this.logger.log(`Retrying SMS for ${failedLeads.length} leads...`);
+
+    for (const lead of failedLeads) {
+      const result = await this.autoSendPromo(lead.id);
+      if (!result.success) break; // device hali offline — to'xtash
+      await new Promise(r => setTimeout(r, 1000)); // 1 sek interval
+    }
   }
 
   async getLogs(page = 1, limit = 50) {
