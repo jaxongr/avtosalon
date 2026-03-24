@@ -22,7 +22,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
     brand: 'Chevrolet',
     aliases: ['chevrolet', 'shevrolet', 'shevralet', 'шевроле'],
     models: [
-      { name: 'Cobalt', aliases: ['cobalt', 'kobalt', 'sobult', 'кобальт', 'кобалт', 'кобилт', 'кобылт'] },
+      { name: 'Cobalt', aliases: ['cobalt', 'kobalt', 'kobilt', 'sobult', 'кобальт', 'кобалт', 'кобилт', 'кобылт'] },
       { name: 'Malibu', aliases: ['malibu', 'malibu 1', 'maliby', 'malib', 'малибу'] },
       { name: 'Malibu 2', aliases: ['malibu 2', 'malibu2', 'малибу 2'] },
       { name: 'Gentra', aliases: ['gentra', 'jentra', 'гентра', 'жентра', 'женtra'] },
@@ -155,7 +155,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Mercedes-Benz',
-    aliases: ['mercedes', 'mersedes', 'benz', 'мерседес', 'мерс'],
+    aliases: ['mercedes', 'mersedes', 'мерседес', 'мерс'],
     models: [
       { name: 'S-Class', aliases: ['s class', 's-class', 's500', 's550'] },
       { name: 'E-Class', aliases: ['e class', 'e-class', 'e200', 'e220', 'e300'] },
@@ -356,9 +356,12 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
     ],
   },
   {
-    brand: 'MAN',
-    aliases: ['man'],
-    models: [],
+    brand: 'ZIL',
+    aliases: ['zil', 'зил'],
+    models: [
+      { name: '130', aliases: ['зил 130', 'zil 130'] },
+      { name: '131', aliases: ['зил 131', 'zil 131'] },
+    ],
   },
   {
     brand: 'Belarus',
@@ -459,11 +462,15 @@ function parseBrandModel(text: string): { brand: string | null; model: string | 
 
   if (bestMatch) return bestMatch;
 
-  // Try brand-only match
+  // Try brand-only match (so'z chegarasi bilan)
   for (const entry of BRAND_MODEL_DB) {
     for (const alias of entry.aliases) {
-      if (lower.includes(alias)) {
-        return { brand: entry.brand, model: null };
+      if (alias.length <= 3) {
+        // Qisqa aliaslar (gaz, man, byd) — qattiq word boundary
+        const regex = new RegExp(`\\b${alias}\\b`, 'i');
+        if (regex.test(lower)) return { brand: entry.brand, model: null };
+      } else {
+        if (lower.includes(alias)) return { brand: entry.brand, model: null };
       }
     }
   }
@@ -472,10 +479,12 @@ function parseBrandModel(text: string): { brand: string | null; model: string | 
 }
 
 function parseYear(text: string): number | null {
+  // 4 raqamli yil
   const patterns = [
-    /(?:yili|год|year)[\s:\-=]*(\d{4})/i,
-    /(\d{4})[\s\-]*(?:yil|год)/i,
+    /(?:yili|йили|год|year)[\s:\-=]*(\d{4})/i,
+    /(\d{4})[\s\-]*(?:yil|йил|год)/i,
     /📅[^0-9]*(\d{4})/,
+    /📆[^0-9]*(\d{4})/,
   ];
   for (const p of patterns) {
     const m = text.match(p);
@@ -484,6 +493,16 @@ function parseYear(text: string): number | null {
       if (y >= 1980 && y <= 2030) return y;
     }
   }
+
+  // 2 raqamli yil: "yili 14" → 2014, "yili 25" → 2025
+  const shortYear = text.match(/(?:yili|йили|год|year|📅|📆)[\s:\-=]*(\d{2})(?:\s|$|[^0-9])/i);
+  if (shortYear) {
+    const y = parseInt(shortYear[1]);
+    if (y >= 0 && y <= 30) return 2000 + y;
+    if (y >= 80 && y <= 99) return 1900 + y;
+  }
+
+  // 4 raqamli yil matnda
   const fallback = text.match(/\b(19[89]\d|20[0-2]\d)\b/);
   if (fallback) return parseInt(fallback[1]);
   return null;
@@ -513,7 +532,7 @@ function parsePrice(text: string): { amount: number | null; currency: 'USD' | 'U
 
   // UZS / million patterns
   const uzsPatterns = [
-    /(\d[\d\s,.]*)[\s]*(?:mln|млн|million|milyon|милион)/i,
+    /(\d[\d\s,.]*)[\s]*(?:mln|млн|million|milyon|милион|милен|миллион)/i,
     /(\d[\d\s,.]*)\s*(?:so'm|сўм|сум|sum|uzs)/i,
   ];
   for (const p of uzsPatterns) {
