@@ -25,9 +25,9 @@ export class TelegramScraperService {
    * Har 10 daqiqada barcha guruhlardan oxirgi xabarlarni scrape qilish
    * gramjs real-time update hammadan kelmaydi, shu sababli fallback kerak
    */
-  @Cron('*/3 * * * *')
+  @Cron('* * * * *')
   async periodicScrape() {
-    await this.scrape(5); // oxirgi 5 daqiqa
+    await this.scrape(3); // oxirgi 3 daqiqa, har daqiqa tekshirish
   }
 
   async scrape(minutes: number = 15) {
