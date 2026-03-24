@@ -26,28 +26,22 @@ const CAR_KEYWORDS = [
 
 /**
  * Xabar mashina e'loniga tegishlimi?
- * Agar mashina brandi/modeli topilsa — albatta ha
- * Agar uy-joy/chorva so'zlari bo'lsa va mashina konteksti yo'q — yo'q
+ * QATTIQ FILTR: brand YOKI model topilishi SHART
+ * Aks holda — unitaz, telefon, boshqa narsalar ham olinib ketadi
  */
 export function isCarAd(text: string, parsed: ParsedCarData | null): boolean {
-  // Agar brand yoki model topilgan bo'lsa — 100% mashina e'loni
-  if (parsed?.brand || parsed?.model) return true;
+  if (!parsed) return false;
+
+  // Brand yoki model topilishi SHART — bu asosiy filtr
+  if (!parsed.brand && !parsed.model) return false;
 
   const lower = text.toLowerCase()
     .replace(/[\u02BB\u02BC\u2018\u2019\u0060\u00B4]/g, "'");
 
-  // Uy-joy/chorva e'lonlari — mashina konteksti bo'lmasa filtrlash
+  // Uy-joy/chorva e'lonlari — mashina modeli topilgan bo'lsa ham filtrlash
   const hasRealEstate = REAL_ESTATE_KEYWORDS.some(kw => lower.includes(kw));
   const hasLivestock = LIVESTOCK_KEYWORDS.some(kw => lower.includes(kw));
-  const hasCarContext = CAR_KEYWORDS.some(kw => lower.includes(kw));
+  if (hasRealEstate || hasLivestock) return false;
 
-  if ((hasRealEstate || hasLivestock) && !hasCarContext) return false;
-
-  // Agar mashina so'zlari bo'lsa — ha
-  if (hasCarContext) return true;
-
-  // Default: agar narx va yil bor — ehtimol mashina
-  if (parsed?.year && parsed?.priceAmount) return true;
-
-  return false;
+  return true;
 }
