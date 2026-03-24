@@ -22,8 +22,8 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
     brand: 'Chevrolet',
     aliases: ['chevrolet', 'shevrolet', 'shevralet', 'шевроле'],
     models: [
-      { name: 'Cobalt', aliases: ['cobalt', 'kobalt', 'кобальт', 'кобалт'] },
-      { name: 'Malibu', aliases: ['malibu', 'maliby', 'malib', 'малибу'] },
+      { name: 'Cobalt', aliases: ['cobalt', 'kobalt', 'sobult', 'кобальт', 'кобалт'] },
+      { name: 'Malibu', aliases: ['malibu', 'malibu 1', 'maliby', 'malib', 'малибу'] },
       { name: 'Malibu 2', aliases: ['malibu 2', 'malibu2', 'малибу 2'] },
       { name: 'Gentra', aliases: ['gentra', 'гентра', 'жентра', 'jentra'] },
       { name: 'Lacetti', aliases: ['lacetti', 'lasetti', 'lachetti', 'лачетти', 'лацетти', 'ласетти', 'ласети', 'лацети'] },
@@ -513,7 +513,7 @@ function parsePrice(text: string): { amount: number | null; currency: 'USD' | 'U
 
   // UZS / million patterns
   const uzsPatterns = [
-    /(\d[\d\s,.]*)\s*(?:mln|млн|million|milyon|милион)/i,
+    /(\d[\d\s,.]*)[\s]*(?:mln|млн|million|milyon|милион)/i,
     /(\d[\d\s,.]*)\s*(?:so'm|сўм|сум|sum|uzs)/i,
   ];
   for (const p of uzsPatterns) {
@@ -536,8 +536,8 @@ function parsePrice(text: string): { amount: number | null; currency: 'USD' | 'U
 function parseColor(text: string): string | null {
   const lower = text.toLowerCase();
   const colors: [string[], string][] = [
-    [['oq', 'белый', 'white', 'ok'], 'Oq'],
-    [['qora', 'черный', 'black'], 'Qora'],
+    [['oq', 'белый', 'white', 'ok', 'ок', 'оқ', 'мокрий', 'malochniy', 'молочный'], 'Oq'],
+    [['qora', 'черный', 'black', 'кора', 'қора'], 'Qora'],
     [['kumush', 'серебр', 'silver'], 'Kumush'],
     [['qizil', 'красный', 'red'], 'Qizil'],
     [["ko'k", 'синий', 'blue', 'kok'], "Ko'k"],
@@ -588,7 +588,7 @@ function parseFuelType(text: string): string | null {
   if (/metan|метан/.test(lower)) return 'Metan';
   if (/propan|пропан/.test(lower)) return 'Propan';
   if (/gaz|газ/.test(lower)) return 'Gaz';
-  if (/benz|бенз/.test(lower)) return 'Benzin';
+  if (/benz|бенз|бензин/.test(lower)) return 'Benzin';
   return null;
 }
 
@@ -603,7 +603,7 @@ function parseTransmission(text: string): string | null {
     if (/full|фулл/.test(poz)) return 'Avtomat';
     if (/premier|премьер/.test(poz)) return 'Avtomat';
   }
-  if (/avtomat|автомат|акпп/.test(lower)) return 'Avtomat';
+  if (/avtomat|автомат|афтамат|акпп/.test(lower)) return 'Avtomat';
   if (/tiptronik|типтроник/.test(lower)) return 'Tiptronik';
   if (/mexanik|механик|мкпп|xadavoy|ходовой|hadavoy/.test(lower)) return 'Mexanika';
   if (/robot|робот/.test(lower)) return 'Robot';
@@ -637,29 +637,40 @@ function parseCreditAvailable(text: string): boolean | null {
 function parseCity(text: string): string | null {
   const lower = text.toLowerCase();
   const cities: [string[], string][] = [
-    [['toshkent', 'ташкент', 'tashkent'], 'Toshkent'],
-    [['samarqand', 'самарканд'], 'Samarqand'],
-    [['buxoro', 'бухар'], 'Buxoro'],
+    [['toshkent', 'ташкент', 'тошкент', 'tashkent'], 'Toshkent'],
+    [['samarqand', 'самарканд', 'самаркант', 'samarkand'], 'Samarqand'],
+    [['buxoro', 'бухар', 'бухоро'], 'Buxoro'],
     [['namangan', 'наманган'], 'Namangan'],
-    [['andijon', 'андижан'], 'Andijon'],
-    [["farg'ona", 'фергана', 'fargona'], "Farg'ona"],
-    [["qo'qon", 'коканд', 'qoqon', 'кукон', 'quqon'], "Qo'qon"],
-    [['qarshi', 'карши'], 'Qarshi'],
-    [['navoiy', 'навои'], 'Navoiy'],
-    [['jizzax', 'джизак', 'жиззах', 'жиззак'], 'Jizzax'],
-    [['termiz', 'термез'], 'Termiz'],
+    [['andijon', 'андижан', 'андижон', 'andijan'], 'Andijon'],
+    [["farg'ona", 'фергана', 'фаргона', 'фарғона', 'fargona', 'fergana'], "Farg'ona"],
+    [["qo'qon", 'коканд', 'кўқон', 'қўқон', 'qoqon', 'кукон', 'quqon'], "Qo'qon"],
+    [['qarshi', 'карши', 'қарши'], 'Qarshi'],
+    [['navoiy', 'навои', 'навоий'], 'Navoiy'],
+    [['jizzax', 'джизак', 'жиззах', 'жиззак', 'жизак', 'жиззох'], 'Jizzax'],
+    [['termiz', 'термез', 'термиз'], 'Termiz'],
     [['nukus', 'нукус'], 'Nukus'],
-    [['xorazm', 'хорезм', 'urgench', 'урганч'], 'Xorazm'],
-    [['surxondaryo', 'сурхандар'], 'Surxondaryo'],
-    [['qashqadaryo', 'кашкадар'], 'Qashqadaryo'],
-    [['sirdaryo', 'сырдар'], 'Sirdaryo'],
+    [['xorazm', 'хорезм', 'хоразм', 'urgench', 'урганч', 'xiva', 'хива'], 'Xorazm'],
+    [['surxondaryo', 'сурхандар', 'сурхондарё', 'сурхондарьо', 'surxon'], 'Surxondaryo'],
+    [['qashqadaryo', 'кашкадар', 'қашқадарё', 'kashkadarya'], 'Qashqadaryo'],
+    [['sirdaryo', 'сырдар', 'сирдарё', 'guliston', 'гулистан', 'гулистон'], 'Sirdaryo'],
     [['urgut', 'ургут'], 'Urgut'],
     [['angren', 'ангрен'], 'Angren'],
-    [['shahrisabz', 'шахрисабз'], 'Shahrisabz'],
+    [['shahrisabz', 'шахрисабз', 'шахрисабс'], 'Shahrisabz'],
     [['asaka', 'асака'], 'Asaka'],
-    [['margilan', 'маргилан'], "Marg'ilon"],
-    [['denov', 'денау'], 'Denov'],
-    [['kitob', 'китаб'], 'Kitob'],
+    [['margilan', 'маргилан', 'марғилон', "marg'ilon"], "Marg'ilon"],
+    [['denov', 'денау', 'денов'], 'Denov'],
+    [['kitob', 'китаб', 'китоб'], 'Kitob'],
+    [['qoraqalpog', 'коракалпок', 'қорақалпоғ', 'karakalpak', 'нукус'], "Qoraqalpog'iston"],
+    [['bog\'dod', 'богдод', 'боғдод'], "Bog'dod"],
+    [['chirchiq', 'чирчик', 'чирчиқ'], 'Chirchiq'],
+    [['olmaliq', 'алмалык', 'олмалиқ'], 'Olmaliq'],
+    [['nurobod', 'нуробод'], 'Nurobod'],
+    [['pop', 'поп'], 'Pop'],
+    [['chust', 'чуст'], 'Chust'],
+    [['kogon', 'когон', 'коғон'], 'Kogon'],
+    [['zarafshon', 'зарафшан', 'зарафшон'], 'Zarafshon'],
+    [['bekobod', 'бекабад', 'бекобод'], 'Bekobod'],
+    [['yangiyul', 'янгиюл', 'янгиюль'], 'Yangiyul'],
   ];
 
   const manzilPattern = text.match(/(?:manzil|манзил|📍|🚩|🏠|shahar|город|шаҳар|viloyat)[\s:\-]*([^\n,!]{2,30})/i);
