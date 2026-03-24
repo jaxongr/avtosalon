@@ -39,17 +39,30 @@ export class TelegramScraperService {
     }
 
     this.isScraping = true;
+    const startTime = Date.now();
     const groups = await this.groupsService.findActive();
     let totalLeads = 0;
+    let processedGroups = 0;
+    let errorGroups = 0;
 
     try {
       const offsetDate = Math.floor(Date.now() / 1000) - (minutes * 60);
 
       for (const group of groups) {
+        // 5 daqiqadan oshsa — to'xtatish (stuck bo'lmasligi uchun)
+        if (Date.now() - startTime > 5 * 60 * 1000) {
+          this.logger.warn(`Scrape timeout after 5 min, processed ${processedGroups}/${groups.length} groups`);
+          break;
+        }
+
         try {
-          const entity = await client.getEntity(group.telegramId);
+          const entity = await client.getEntity(group.telegramId).catch(() => null);
+          if (!entity) {
+            errorGroups++;
+            continue;
+          }
           const messages = await client.getMessages(entity, {
-            limit: 100,
+            limit: 50,
             offsetDate,
           });
 
@@ -110,21 +123,21 @@ export class TelegramScraperService {
 
           await this.groupsService.updateLastScraped(group.telegramId);
           totalLeads += groupLeads;
+          processedGroups++;
 
           // Rate limit between groups
-          await new Promise(r => setTimeout(r, 1000));
+          await new Promise(r => setTimeout(r, 500));
         } catch (error) {
+          errorGroups++;
           this.logger.debug(`Scrape error for "${group.title}": ${error.message}`);
         }
       }
 
-      if (totalLeads > 0) {
-        this.logger.log(`Scrape complete: ${totalLeads} new leads from ${groups.length} groups`);
-      }
+      this.logger.log(`Scrape done: ${totalLeads} leads, ${processedGroups}/${groups.length} groups ok, ${errorGroups} errors`);
     } finally {
       this.isScraping = false;
     }
 
-    return { totalLeads, processedGroups: groups.length };
+    return { totalLeads, processedGroups };
   }
 }
