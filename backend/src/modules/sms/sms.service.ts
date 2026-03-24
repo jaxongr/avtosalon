@@ -6,42 +6,38 @@ import axios from 'axios';
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
-  private token: string;
-  private deviceId: string;
+  private apiKey: string;
+  private gatewayUrl: string;
 
   constructor(
     private config: ConfigService,
     private prisma: PrismaService,
   ) {
-    this.token = this.config.get('SEMYSMS_TOKEN', '');
-    this.deviceId = this.config.get('SEMYSMS_DEVICE', '');
+    this.apiKey = this.config.get('SMS_GATEWAY_API_KEY', '');
+    this.gatewayUrl = this.config.get('SMS_GATEWAY_URL', 'http://185.207.251.184:8086');
   }
 
-  async sendSms(leadId: string, phone: string, message: string): Promise<{ success: boolean; smsId?: string }> {
+  async sendSms(leadId: string, phone: string, message: string): Promise<{ success: boolean; smsId?: string; taskId?: string }> {
     const smsLog = await this.prisma.smsLog.create({
       data: { leadId, phone, message, status: 'PENDING' },
     });
 
-    if (!this.token) {
-      this.logger.warn('SEMYSMS_TOKEN not configured');
-      await this.prisma.smsLog.update({ where: { id: smsLog.id }, data: { status: 'FAILED', response: 'No token' } });
+    if (!this.apiKey) {
+      this.logger.warn('SMS_GATEWAY_API_KEY not configured');
+      await this.prisma.smsLog.update({ where: { id: smsLog.id }, data: { status: 'FAILED', response: 'No API key' } });
       return { success: false, smsId: smsLog.id };
     }
 
     try {
-      // Auto-detect device if not set
-      if (!this.deviceId) {
-        await this.detectDevice();
-      }
+      const resp = await axios.post(
+        `${this.gatewayUrl}/api/v1/sms/send`,
+        { to: phone, message },
+        { headers: { 'x-api-key': this.apiKey, 'Content-Type': 'application/json' } },
+      );
 
-      const resp = await axios.post('https://semysms.net/api/3/sms.php', {
-        token: this.token,
-        device: this.deviceId,
-        phone,
-        msg: message,
-      });
+      const success = resp.status === 201 || resp.data?.success;
+      const taskId = resp.data?.taskId || resp.data?.id;
 
-      const success = resp.data?.code === 0;
       await this.prisma.smsLog.update({
         where: { id: smsLog.id },
         data: {
@@ -57,29 +53,40 @@ export class SmsService {
         });
       }
 
-      this.logger.log(`SMS to ${phone}: ${success ? 'SENT' : 'FAILED'}`);
-      return { success, smsId: smsLog.id };
+      this.logger.log(`SMS to ${phone}: ${success ? 'SENT' : 'FAILED'}${taskId ? ' taskId=' + taskId : ''}`);
+      return { success, smsId: smsLog.id, taskId };
     } catch (error) {
-      this.logger.error(`SMS error: ${error.message}`);
+      const errMsg = error.response?.data?.message || error.message;
+      this.logger.error(`SMS error to ${phone}: ${errMsg}`);
       await this.prisma.smsLog.update({
         where: { id: smsLog.id },
-        data: { status: 'FAILED', response: error.message },
+        data: { status: 'FAILED', response: errMsg },
       });
       return { success: false, smsId: smsLog.id };
     }
   }
 
-  private async detectDevice() {
+  async checkTaskStatus(taskId: string) {
     try {
-      const resp = await axios.get(`https://semysms.net/api/3/devices.php?token=${this.token}`);
-      const devices = resp.data?.data || [];
-      const active = devices.find((d: any) => !d.is_arhive && d.is_work && d.power);
-      if (active) {
-        this.deviceId = active.id.toString();
-        this.logger.log(`SemySMS device detected: ${this.deviceId} (${active.device_name})`);
-      }
-    } catch (e) {
-      this.logger.error(`Device detection failed: ${e.message}`);
+      const resp = await axios.get(
+        `${this.gatewayUrl}/api/v1/sms/status/${taskId}`,
+        { headers: { 'x-api-key': this.apiKey } },
+      );
+      return resp.data;
+    } catch (error) {
+      return { error: error.message };
+    }
+  }
+
+  async getBalance() {
+    try {
+      const resp = await axios.get(
+        `${this.gatewayUrl}/api/v1/balance`,
+        { headers: { 'x-api-key': this.apiKey } },
+      );
+      return resp.data;
+    } catch (error) {
+      return { error: error.message };
     }
   }
 
