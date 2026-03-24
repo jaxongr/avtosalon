@@ -27,7 +27,7 @@ export class TelegramScraperService {
    */
   @Cron('* * * * *')
   async periodicScrape() {
-    await this.scrape(3); // oxirgi 3 daqiqa, har daqiqa tekshirish
+    await this.scrape(5); // oxirgi 5 daqiqa, har daqiqa tekshirish
   }
 
   async scrape(minutes: number = 15) {
@@ -62,7 +62,7 @@ export class TelegramScraperService {
             continue;
           }
           const messages = await client.getMessages(entity, {
-            limit: 50,
+            limit: 100,
             offsetDate,
           });
 
