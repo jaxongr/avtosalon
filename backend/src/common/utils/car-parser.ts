@@ -3,6 +3,10 @@ import { ParsedCarData } from '../interfaces/parsed-car-data.interface';
 function normalizeText(text: string): string {
   return text
     .replace(/[\u02BB\u02BC\u2018\u2019\u0060\u00B4]/g, "'")
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '') // zero-width chars
+    .replace(/\*\*/g, '')
+    .replace(/#+/g, ' ')
+    .replace(/__/g, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -16,68 +20,68 @@ interface BrandModelEntry {
 const BRAND_MODEL_DB: BrandModelEntry[] = [
   {
     brand: 'Chevrolet',
-    aliases: ['chevrolet', 'shevrolet', 'shevralet'],
+    aliases: ['chevrolet', 'shevrolet', 'shevralet', 'шевроле'],
     models: [
-      { name: 'Cobalt', aliases: ['cobalt', 'kobalt'] },
-      { name: 'Malibu', aliases: ['malibu', 'maliby', 'malib'] },
-      { name: 'Malibu 2', aliases: ['malibu 2', 'malibu2'] },
-      { name: 'Gentra', aliases: ['gentra'] },
-      { name: 'Lacetti', aliases: ['lacetti', 'lasetti', 'lachetti'] },
-      { name: 'Nexia', aliases: ['nexia', 'nexia 3', 'nexia3'] },
-      { name: 'Damas', aliases: ['damas'] },
-      { name: 'Labo', aliases: ['labo'] },
-      { name: 'Spark', aliases: ['spark'] },
-      { name: 'Captiva', aliases: ['captiva'] },
-      { name: 'Tracker', aliases: ['tracker', 'treker'] },
-      { name: 'Tracker 2', aliases: ['tracker 2', 'treker 2'] },
-      { name: 'Equinox', aliases: ['equinox'] },
-      { name: 'Onix', aliases: ['onix'] },
-      { name: 'Monza', aliases: ['monza'] },
-      { name: 'Orlando', aliases: ['orlando'] },
-      { name: 'Traverse', aliases: ['traverse'] },
-      { name: 'Tahoe', aliases: ['tahoe'] },
-      { name: 'Epica', aliases: ['epica'] },
-      { name: 'Cruze', aliases: ['cruze'] },
-      { name: 'Aveo', aliases: ['aveo'] },
-      { name: 'Matiz', aliases: ['matiz'] },
-      { name: 'Tico', aliases: ['tico', 'tiko'] },
+      { name: 'Cobalt', aliases: ['cobalt', 'kobalt', 'кобальт', 'кобалт'] },
+      { name: 'Malibu', aliases: ['malibu', 'maliby', 'malib', 'малибу'] },
+      { name: 'Malibu 2', aliases: ['malibu 2', 'malibu2', 'малибу 2'] },
+      { name: 'Gentra', aliases: ['gentra', 'гентра', 'жентра', 'jentra'] },
+      { name: 'Lacetti', aliases: ['lacetti', 'lasetti', 'lachetti', 'лачетти', 'лацетти', 'ласетти', 'ласети', 'лацети'] },
+      { name: 'Nexia', aliases: ['nexia', 'nexia 3', 'nexia3', 'nexia 2', 'nexia2', 'nexia 1', 'nexia1', 'нексия', 'нексиа'] },
+      { name: 'Damas', aliases: ['damas', 'дамас'] },
+      { name: 'Labo', aliases: ['labo', 'лабо'] },
+      { name: 'Spark', aliases: ['spark', 'спарк'] },
+      { name: 'Captiva', aliases: ['captiva', 'kaptiva', 'каптива'] },
+      { name: 'Tracker', aliases: ['tracker', 'treker', 'трекер', 'тракер', 'треккер'] },
+      { name: 'Tracker 2', aliases: ['tracker 2', 'treker 2', 'трекер 2', 'треккер 2', 'треккер2'] },
+      { name: 'Equinox', aliases: ['equinox', 'эквинокс'] },
+      { name: 'Onix', aliases: ['onix', 'оникс'] },
+      { name: 'Monza', aliases: ['monza', 'монза'] },
+      { name: 'Orlando', aliases: ['orlando', 'орландо'] },
+      { name: 'Traverse', aliases: ['traverse', 'траверс'] },
+      { name: 'Tahoe', aliases: ['tahoe', 'тахо'] },
+      { name: 'Epica', aliases: ['epica', 'эпика'] },
+      { name: 'Cruze', aliases: ['cruze', 'круз'] },
+      { name: 'Aveo', aliases: ['aveo', 'авео'] },
+      { name: 'Matiz', aliases: ['matiz', 'матиз'] },
+      { name: 'Tico', aliases: ['tico', 'tiko', 'тико'] },
     ],
   },
   {
     brand: 'Toyota',
-    aliases: ['toyota', 'tayota'],
+    aliases: ['toyota', 'tayota', 'тойота'],
     models: [
-      { name: 'Camry', aliases: ['camry', 'kamri', 'kambri'] },
-      { name: 'Corolla', aliases: ['corolla'] },
-      { name: 'Land Cruiser', aliases: ['land cruiser', 'cruiser'] },
-      { name: 'Prado', aliases: ['prado'] },
-      { name: 'RAV4', aliases: ['rav4', 'rav 4'] },
-      { name: 'Hilux', aliases: ['hilux'] },
-      { name: 'Avalon', aliases: ['avalon'] },
-      { name: 'Yaris', aliases: ['yaris'] },
-      { name: 'Crown', aliases: ['crown'] },
-      { name: 'Fortuner', aliases: ['fortuner'] },
-      { name: 'Highlander', aliases: ['highlander'] },
+      { name: 'Camry', aliases: ['camry', 'kamri', 'kambri', 'камри', 'кэмри'] },
+      { name: 'Corolla', aliases: ['corolla', 'королла', 'каролла'] },
+      { name: 'Land Cruiser', aliases: ['land cruiser', 'cruiser', 'ленд крузер', 'лэнд крузер', 'крузер'] },
+      { name: 'Prado', aliases: ['prado', 'прадо'] },
+      { name: 'RAV4', aliases: ['rav4', 'rav 4', 'рав4'] },
+      { name: 'Hilux', aliases: ['hilux', 'хайлюкс'] },
+      { name: 'Avalon', aliases: ['avalon', 'авалон'] },
+      { name: 'Yaris', aliases: ['yaris', 'ярис'] },
+      { name: 'Crown', aliases: ['crown', 'краун'] },
+      { name: 'Fortuner', aliases: ['fortuner', 'фортунер'] },
+      { name: 'Highlander', aliases: ['highlander', 'хайлендер'] },
     ],
   },
   {
     brand: 'Hyundai',
-    aliases: ['hyundai', 'hundai', 'xundai'],
+    aliases: ['hyundai', 'hundai', 'xundai', 'хендай', 'хундай', 'хёндай'],
     models: [
-      { name: 'Sonata', aliases: ['sonata'] },
-      { name: 'Tucson', aliases: ['tucson', 'tukson'] },
-      { name: 'Elantra', aliases: ['elantra'] },
-      { name: 'Accent', aliases: ['accent', 'aksent'] },
-      { name: 'Santa Fe', aliases: ['santa fe', 'santafe'] },
-      { name: 'Creta', aliases: ['creta'] },
-      { name: 'Palisade', aliases: ['palisade'] },
-      { name: 'Porter', aliases: ['porter'] },
-      { name: 'Venue', aliases: ['venue'] },
+      { name: 'Sonata', aliases: ['sonata', 'соната'] },
+      { name: 'Tucson', aliases: ['tucson', 'tukson', 'тусон', 'туксон'] },
+      { name: 'Elantra', aliases: ['elantra', 'элантра'] },
+      { name: 'Accent', aliases: ['accent', 'aksent', 'акцент'] },
+      { name: 'Santa Fe', aliases: ['santa fe', 'santafe', 'санта фе'] },
+      { name: 'Creta', aliases: ['creta', 'крета'] },
+      { name: 'Palisade', aliases: ['palisade', 'палисад'] },
+      { name: 'Porter', aliases: ['porter', 'портер'] },
+      { name: 'Venue', aliases: ['venue', 'венью'] },
     ],
   },
   {
     brand: 'Kia',
-    aliases: ['kia'],
+    aliases: ['kia', 'киа', 'кия'],
     models: [
       { name: 'K5', aliases: ['k5'] },
       { name: 'K7', aliases: ['k7'] },
@@ -92,7 +96,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'BYD',
-    aliases: ['byd'],
+    aliases: ['byd', 'бид'],
     models: [
       { name: 'Song Plus', aliases: ['song plus', 'song+'] },
       { name: 'Song Pro', aliases: ['song pro'] },
@@ -106,7 +110,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Geely',
-    aliases: ['geely'],
+    aliases: ['geely', 'джили', 'жили'],
     models: [
       { name: 'Monjaro', aliases: ['monjaro'] },
       { name: 'Coolray', aliases: ['coolray'] },
@@ -117,7 +121,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Chery',
-    aliases: ['chery', 'cheri'],
+    aliases: ['chery', 'cheri', 'чери', 'черри'],
     models: [
       { name: 'Tiggo 4 Pro', aliases: ['tiggo 4 pro'] },
       { name: 'Tiggo 7 Pro', aliases: ['tiggo 7 pro'] },
@@ -131,7 +135,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Haval',
-    aliases: ['haval'],
+    aliases: ['haval', 'хавал', 'хавейл'],
     models: [
       { name: 'Jolion', aliases: ['jolion'] },
       { name: 'Dargo', aliases: ['dargo'] },
@@ -141,7 +145,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Lada',
-    aliases: ['lada', 'vaz'],
+    aliases: ['lada', 'vaz', 'лада', 'ваз'],
     models: [
       { name: 'Vesta', aliases: ['vesta'] },
       { name: 'Granta', aliases: ['granta'] },
@@ -151,7 +155,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Mercedes-Benz',
-    aliases: ['mercedes', 'mersedes', 'benz'],
+    aliases: ['mercedes', 'mersedes', 'benz', 'мерседес', 'мерс'],
     models: [
       { name: 'S-Class', aliases: ['s class', 's-class', 's500', 's550'] },
       { name: 'E-Class', aliases: ['e class', 'e-class', 'e200', 'e220', 'e300'] },
@@ -161,7 +165,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'BMW',
-    aliases: ['bmw'],
+    aliases: ['bmw', 'бмв'],
     models: [
       { name: 'X5', aliases: ['x5'] },
       { name: 'X3', aliases: ['x3'] },
@@ -172,7 +176,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Volkswagen',
-    aliases: ['volkswagen', 'vw'],
+    aliases: ['volkswagen', 'vw', 'фольксваген'],
     models: [
       { name: 'Tiguan', aliases: ['tiguan'] },
       { name: 'Passat', aliases: ['passat'] },
@@ -184,7 +188,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Nissan',
-    aliases: ['nissan'],
+    aliases: ['nissan', 'ниссан'],
     models: [
       { name: 'X-Trail', aliases: ['x-trail', 'x trail'] },
       { name: 'Qashqai', aliases: ['qashqai'] },
@@ -213,33 +217,206 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
   },
   {
     brand: 'Moskvich',
-    aliases: ['moskvich', 'moskivich'],
+    aliases: ['moskvich', 'moskivich', 'москвич'],
     models: [
       { name: '412', aliases: ['412pikap', '412'] },
+      { name: '2141', aliases: ['2141'] },
     ],
   },
   {
     brand: 'GAZ',
-    aliases: ['gaz'],
+    aliases: ['газель'],
     models: [
-      { name: 'Gazelle', aliases: ['gazelle', 'gazel'] },
+      { name: 'Gazelle', aliases: ['gazelle', 'gazel', 'газель'] },
+      { name: '3110', aliases: ['3110', 'волга'] },
     ],
   },
   {
     brand: 'Jetour',
-    aliases: ['jetour'],
+    aliases: ['jetour', 'жетур', 'джетур'],
     models: [
-      { name: 'Dashing', aliases: ['dashing'] },
+      { name: 'Dashing', aliases: ['dashing', 'дашинг'] },
       { name: 'X70', aliases: ['x70'] },
     ],
   },
   {
     brand: 'Exeed',
-    aliases: ['exeed'],
+    aliases: ['exeed', 'эксид'],
     models: [
       { name: 'VX', aliases: ['vx'] },
       { name: 'LX', aliases: ['lx'] },
       { name: 'TXL', aliases: ['txl'] },
+    ],
+  },
+  {
+    brand: 'Bestune',
+    aliases: ['bestune', 'бестун', 'bestun'],
+    models: [
+      { name: 'T77', aliases: ['t77', 'т77'] },
+      { name: 'T99', aliases: ['t99'] },
+      { name: 'B70', aliases: ['b70'] },
+    ],
+  },
+  {
+    brand: 'GAC',
+    aliases: ['gac', 'гак'],
+    models: [
+      { name: 'Aion V', aliases: ['aion v', 'аион'] },
+      { name: 'Aion S', aliases: ['aion s'] },
+      { name: 'GS8', aliases: ['gs8'] },
+    ],
+  },
+  {
+    brand: 'Changan',
+    aliases: ['changan', 'чанган'],
+    models: [
+      { name: 'CS35', aliases: ['cs35'] },
+      { name: 'CS55', aliases: ['cs55'] },
+      { name: 'CS75', aliases: ['cs75'] },
+      { name: 'UNI-V', aliases: ['uni-v', 'uni v'] },
+      { name: 'UNI-K', aliases: ['uni-k', 'uni k'] },
+    ],
+  },
+  {
+    brand: 'Lexus',
+    aliases: ['lexus', 'лексус'],
+    models: [
+      { name: 'RX', aliases: ['rx350', 'rx300', 'rx'] },
+      { name: 'LX', aliases: ['lx570', 'lx600'] },
+      { name: 'ES', aliases: ['es350', 'es300'] },
+      { name: 'GX', aliases: ['gx460', 'gx470'] },
+    ],
+  },
+  {
+    brand: 'Audi',
+    aliases: ['audi', 'ауди'],
+    models: [
+      { name: 'A4', aliases: ['a4'] },
+      { name: 'A6', aliases: ['a6'] },
+      { name: 'Q5', aliases: ['q5'] },
+      { name: 'Q7', aliases: ['q7'] },
+    ],
+  },
+  {
+    brand: 'Ford',
+    aliases: ['ford', 'форд'],
+    models: [
+      { name: 'Explorer', aliases: ['explorer', 'эксплорер'] },
+      { name: 'Focus', aliases: ['focus', 'фокус'] },
+      { name: 'Mustang', aliases: ['mustang', 'мустанг'] },
+      { name: 'Transit', aliases: ['transit', 'транзит'] },
+    ],
+  },
+  {
+    brand: 'Subaru',
+    aliases: ['subaru', 'субару'],
+    models: [
+      { name: 'Forester', aliases: ['forester', 'форестер'] },
+      { name: 'Outback', aliases: ['outback', 'аутбек'] },
+      { name: 'Legacy', aliases: ['legacy', 'легаси'] },
+    ],
+  },
+  {
+    brand: 'Mazda',
+    aliases: ['mazda', 'мазда'],
+    models: [
+      { name: 'CX-5', aliases: ['cx-5', 'cx5'] },
+      { name: 'CX-9', aliases: ['cx-9', 'cx9'] },
+      { name: '6', aliases: ['mazda 6', 'мазда 6'] },
+    ],
+  },
+  {
+    brand: 'Suzuki',
+    aliases: ['suzuki', 'сузуки'],
+    models: [
+      { name: 'Vitara', aliases: ['vitara', 'витара'] },
+      { name: 'SX4', aliases: ['sx4'] },
+      { name: 'Swift', aliases: ['swift'] },
+    ],
+  },
+  {
+    brand: 'UAZ',
+    aliases: ['uaz', 'уаз'],
+    models: [
+      { name: 'Patriot', aliases: ['patriot', 'патриот'] },
+      { name: 'Hunter', aliases: ['hunter', 'хантер'] },
+    ],
+  },
+  {
+    brand: 'KAMAZ',
+    aliases: ['kamaz', 'камаз'],
+    models: [],
+  },
+  {
+    brand: 'Isuzu',
+    aliases: ['isuzu', 'исузу'],
+    models: [
+      { name: 'NQR', aliases: ['nqr'] },
+      { name: 'Elf', aliases: ['elf'] },
+    ],
+  },
+  {
+    brand: 'MAN',
+    aliases: ['man'],
+    models: [],
+  },
+  {
+    brand: 'Belarus',
+    aliases: ['belarus', 'беларус'],
+    models: [
+      { name: '82', aliases: ['82.1'] },
+      { name: '892', aliases: ['892'] },
+      { name: '920', aliases: ['920'] },
+    ],
+  },
+  {
+    brand: 'Hongqi',
+    aliases: ['hongqi', 'хонгки', 'хонки'],
+    models: [
+      { name: 'EQ5', aliases: ['eq5'] },
+      { name: 'H5', aliases: ['h5'] },
+      { name: 'E-QM5', aliases: ['e-qm5', 'eqm5'] },
+    ],
+  },
+  {
+    brand: 'Lada',
+    aliases: ['jiguli', 'жигули', 'жигул'],
+    models: [
+      { name: '2103', aliases: ['2103', 'jiguli 03', '03'] },
+      { name: '2106', aliases: ['2106', 'jiguli 06', '06'] },
+      { name: '2107', aliases: ['2107', 'jiguli 07', '07'] },
+    ],
+  },
+  {
+    brand: 'Ravon',
+    aliases: ['ravon', 'равон'],
+    models: [
+      { name: 'R2', aliases: ['r2'] },
+      { name: 'R3', aliases: ['r3', 'нексиа р3'] },
+      { name: 'R4', aliases: ['r4'] },
+      { name: 'Gentra', aliases: ['ravon gentra'] },
+    ],
+  },
+  {
+    brand: 'Dongfeng',
+    aliases: ['dongfeng', 'донгфенг'],
+    models: [
+      { name: 'Forthing T5', aliases: ['forthing t5', 't5 evo'] },
+    ],
+  },
+  {
+    brand: 'DFSK',
+    aliases: ['dfsk'],
+    models: [
+      { name: 'Glory 580', aliases: ['glory 580'] },
+    ],
+  },
+  {
+    brand: 'Lifan',
+    aliases: ['lifan', 'лифан'],
+    models: [
+      { name: 'X70', aliases: ['lifan x70'] },
+      { name: 'Myway', aliases: ['myway'] },
     ],
   },
 ];
@@ -255,7 +432,12 @@ for (const entry of BRAND_MODEL_DB) {
 }
 
 function parseBrandModel(text: string): { brand: string | null; model: string | null } {
-  const lower = text.toLowerCase();
+  // Bold/markdown/hashtag tozalash
+  const lower = text.toLowerCase()
+    .replace(/\*\*/g, '')
+    .replace(/#+/g, ' ')
+    .replace(/__/g, '')
+    .replace(/\s+/g, ' ');
 
   // Find longest matching model alias (longer = more specific)
   let bestMatch: { brand: string; model: string } | null = null;
@@ -266,11 +448,11 @@ function parseBrandModel(text: string): { brand: string | null; model: string | 
     if (idx !== -1 && alias.length > bestLen) {
       const before = idx > 0 ? lower[idx - 1] : ' ';
       const after = idx + alias.length < lower.length ? lower[idx + alias.length] : ' ';
-      if (/[\s\-:.,!?#()\n]/.test(before) || idx === 0) {
-        if (/[\s\-:.,!?#()\n]/.test(after) || idx + alias.length === lower.length) {
-          bestMatch = info;
-          bestLen = alias.length;
-        }
+      const validBefore = /[\s\-:.,!?#()\n❗️🚘]/.test(before) || idx === 0;
+      const validAfter = /[\s\-:.,!?#()\n❗️]/.test(after) || idx + alias.length === lower.length;
+      if (validBefore && validAfter) {
+        bestMatch = info;
+        bestLen = alias.length;
       }
     }
   }
@@ -332,12 +514,13 @@ function parsePrice(text: string): { amount: number | null; currency: 'USD' | 'U
   // UZS / million patterns
   const uzsPatterns = [
     /(\d[\d\s,.]*)\s*(?:mln|млн|million|milyon|милион)/i,
-    /(\d[\d\s,.]*)\s*(?:so'm|сум|sum|uzs)/i,
+    /(\d[\d\s,.]*)\s*(?:so'm|сўм|сум|sum|uzs)/i,
   ];
   for (const p of uzsPatterns) {
     const m = text.match(p);
     if (m) {
-      const num = parseFloat(m[1].replace(/[\s,]/g, ''));
+      const raw = m[1].replace(/[\s]/g, '').replace(/[,.]/g, '');
+      const num = parseFloat(raw);
       if (num > 0) return { amount: num, currency: 'UZS' };
     }
   }
@@ -358,7 +541,7 @@ function parseColor(text: string): string | null {
     [['kumush', 'серебр', 'silver'], 'Kumush'],
     [['qizil', 'красный', 'red'], 'Qizil'],
     [["ko'k", 'синий', 'blue', 'kok'], "Ko'k"],
-    [['kulrang', 'серый', 'grey', 'gray'], 'Kulrang'],
+    [['kulrang', 'серый', 'grey', 'gray', 'stalnoy', 'стальной'], 'Kulrang'],
     [['yashil', 'зеленый', 'green'], 'Yashil'],
     [['sariq', 'желтый', 'yellow'], 'Sariq'],
   ];
@@ -371,13 +554,10 @@ function parseColor(text: string): string | null {
     }
   }
 
+  // Rang emoji yoki so'zi yaqinida rang topilsa
   for (const [keywords, name] of colors) {
     for (const k of keywords) {
-      const idx = lower.indexOf(k);
-      if (idx !== -1) {
-        const around = lower.substring(Math.max(0, idx - 15), idx + k.length + 15);
-        if (/rang|цвет|🎨/.test(around)) return name;
-      }
+      if (lower.includes(k)) return name;
     }
   }
 
@@ -386,10 +566,10 @@ function parseColor(text: string): string | null {
 
 function parseMileage(text: string): string | null {
   const patterns = [
-    /(?:probeg|пробег|yurgan|юрган|📟)[\s:\-]*(\d[\d\s,.]*)\s*(?:km|км|ming|тыс)/i,
+    /(?:probeg|prabeg|пробег|yurgan|юрган|📟|👣)[\s:\-]*(\d[\d\s,.]*)\s*(?:km|км|ming|тыс)/i,
     /(\d[\d\s,.]*)\s*(?:km|км)\s*(?:yurgan|пробег)/i,
     /(\d[\d\s,.]*)\s*(?:ming\s*km|тыс[.\s]*км)/i,
-    /(?:probeg|пробег|yurgan|юрган|📟)[\s:\-]*(\d[\d\s,.]*)/i,
+    /(?:probeg|prabeg|пробег|yurgan|юрган|📟|👣)[\s:\-]*(\d[\d\s,.]*)/i,
   ];
   for (const p of patterns) {
     const m = text.match(p);
@@ -414,9 +594,18 @@ function parseFuelType(text: string): string | null {
 
 function parseTransmission(text: string): string | null {
   const lower = text.toLowerCase();
+  // Pozitsiya field: "Pozitsiya: Avtomat", "Позиция- автомат"
+  const pozMatch = lower.match(/(?:pozitsi|позици)[\w]*[\s:\-]+([^\n,]{2,20})/i);
+  if (pozMatch) {
+    const poz = pozMatch[1].trim();
+    if (/avtomat|автомат|at\b/.test(poz)) return 'Avtomat';
+    if (/mexanik|механик|mt\b/.test(poz)) return 'Mexanika';
+    if (/full|фулл/.test(poz)) return 'Avtomat';
+    if (/premier|премьер/.test(poz)) return 'Avtomat';
+  }
   if (/avtomat|автомат|акпп/.test(lower)) return 'Avtomat';
   if (/tiptronik|типтроник/.test(lower)) return 'Tiptronik';
-  if (/mexanik|механик|мкпп|xadavoy|ходовой/.test(lower)) return 'Mexanika';
+  if (/mexanik|механик|мкпп|xadavoy|ходовой|hadavoy/.test(lower)) return 'Mexanika';
   if (/robot|робот/.test(lower)) return 'Robot';
   return null;
 }
@@ -454,10 +643,10 @@ function parseCity(text: string): string | null {
     [['namangan', 'наманган'], 'Namangan'],
     [['andijon', 'андижан'], 'Andijon'],
     [["farg'ona", 'фергана', 'fargona'], "Farg'ona"],
-    [["qo'qon", 'коканд', 'qoqon'], "Qo'qon"],
+    [["qo'qon", 'коканд', 'qoqon', 'кукон', 'quqon'], "Qo'qon"],
     [['qarshi', 'карши'], 'Qarshi'],
     [['navoiy', 'навои'], 'Navoiy'],
-    [['jizzax', 'джизак'], 'Jizzax'],
+    [['jizzax', 'джизак', 'жиззах', 'жиззак'], 'Jizzax'],
     [['termiz', 'термез'], 'Termiz'],
     [['nukus', 'нукус'], 'Nukus'],
     [['xorazm', 'хорезм', 'urgench', 'урганч'], 'Xorazm'],
@@ -473,7 +662,7 @@ function parseCity(text: string): string | null {
     [['kitob', 'китаб'], 'Kitob'],
   ];
 
-  const manzilPattern = text.match(/(?:manzil|манзил|📍|shahar|город|viloyat)[\s:\-]*([^\n,!]{2,30})/i);
+  const manzilPattern = text.match(/(?:manzil|манзил|📍|🚩|🏠|shahar|город|шаҳар|viloyat)[\s:\-]*([^\n,!]{2,30})/i);
   if (manzilPattern) {
     const loc = manzilPattern[1].toLowerCase().trim();
     for (const [keywords, name] of cities) {
