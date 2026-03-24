@@ -22,7 +22,7 @@ const BRAND_MODEL_DB: BrandModelEntry[] = [
     brand: 'Chevrolet',
     aliases: ['chevrolet', 'shevrolet', 'shevralet', 'шевроле'],
     models: [
-      { name: 'Cobalt', aliases: ['cobalt', 'kobalt', 'sobult', 'кобальт', 'кобалт'] },
+      { name: 'Cobalt', aliases: ['cobalt', 'kobalt', 'sobult', 'кобальт', 'кобалт', 'кобилт', 'кобылт'] },
       { name: 'Malibu', aliases: ['malibu', 'malibu 1', 'maliby', 'malib', 'малибу'] },
       { name: 'Malibu 2', aliases: ['malibu 2', 'malibu2', 'малибу 2'] },
       { name: 'Gentra', aliases: ['gentra', 'гентра', 'жентра', 'jentra'] },
@@ -528,6 +528,13 @@ function parsePrice(text: string): { amount: number | null; currency: 'USD' | 'U
   const mlnMatch = text.toLowerCase().match(/(\d+)\s*mil/);
   if (mlnMatch) {
     return { amount: parseInt(mlnMatch[1]), currency: 'UZS' };
+  }
+
+  // Narxi: 135.000.000 yoki 135,000,000 (valyutasiz katta raqam = UZS)
+  const bigNumMatch = text.match(/(?:narx|нарх|💵|💰|💲)[\s:\-]*(\d{1,3}[.,]\d{3}[.,]\d{3})/i);
+  if (bigNumMatch) {
+    const num = parseInt(bigNumMatch[1].replace(/[.,]/g, ''));
+    if (num >= 1000000) return { amount: num, currency: 'UZS' };
   }
 
   return { amount: null, currency: null };
