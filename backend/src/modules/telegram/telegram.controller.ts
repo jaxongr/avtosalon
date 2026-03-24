@@ -25,6 +25,22 @@ export class TelegramController {
     return this.clientService.getStatus();
   }
 
+  @Post('send-code')
+  @ApiOperation({ summary: 'Telegram login - kod yuborish' })
+  async sendCode(@Body('phone') phone: string) {
+    return this.clientService.sendCode(phone);
+  }
+
+  @Post('verify-code')
+  @ApiOperation({ summary: 'Telegram login - kodni tasdiqlash' })
+  async verifyCode(
+    @Body('phone') phone: string,
+    @Body('code') code: string,
+    @Body('password') password?: string,
+  ) {
+    return this.clientService.verifyCode(phone, code, password);
+  }
+
   @Post('refresh-groups')
   @ApiOperation({ summary: 'Guruhlar ro\'yxatini yangilash' })
   async refreshGroups() {

@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TelegramClient } from 'telegram';
+import { TelegramClient, Api } from 'telegram';
 import { StringSession } from 'telegram/sessions';
 
 @Injectable()
@@ -11,6 +11,8 @@ export class TelegramClientService implements OnModuleInit, OnModuleDestroy {
   private isConnected = false;
   private apiId: number;
   private apiHash: string;
+  private phoneCodeHash: string | null = null;
+  private loginPhone: string | null = null;
 
   constructor(
     private config: ConfigService,
@@ -76,6 +78,68 @@ export class TelegramClientService implements OnModuleInit, OnModuleDestroy {
 
   getIsConnected(): boolean {
     return this.isConnected;
+  }
+
+  // === Dashboard'dan session ulanish ===
+
+  async sendCode(phone: string) {
+    this.loginPhone = phone;
+    const session = new StringSession('');
+    this.client = new TelegramClient(session, this.apiId, this.apiHash, {
+      connectionRetries: 5,
+    });
+    await this.client.connect();
+
+    const result = await this.client.invoke(
+      new Api.auth.SendCode({
+        phoneNumber: phone,
+        apiId: this.apiId,
+        apiHash: this.apiHash,
+        settings: new Api.CodeSettings({}),
+      }),
+    );
+    this.phoneCodeHash = (result as any).phoneCodeHash;
+    this.logger.log(`Code sent to ${phone}`);
+    return { success: true, phoneCodeHash: this.phoneCodeHash };
+  }
+
+  async verifyCode(phone: string, code: string, password?: string) {
+    if (!this.client) throw new Error('Avval sendCode chaqiring');
+
+    try {
+      await this.client.invoke(
+        new Api.auth.SignIn({
+          phoneNumber: phone,
+          phoneCodeHash: this.phoneCodeHash!,
+          phoneCode: code,
+        }),
+      );
+    } catch (err: any) {
+      if (err.errorMessage === 'SESSION_PASSWORD_NEEDED' && password) {
+        await this.client.signInWithPassword(
+          { apiId: this.apiId, apiHash: this.apiHash },
+          { password: async () => password, onError: async (e) => { throw e; } },
+        );
+      } else if (err.errorMessage === 'SESSION_PASSWORD_NEEDED') {
+        return { success: false, needPassword: true };
+      } else {
+        throw err;
+      }
+    }
+
+    const sessionString = this.client.session.save() as unknown as string;
+
+    // Save session to DB
+    await this.prisma.setting.upsert({
+      where: { key: 'telegram_session_string' },
+      create: { key: 'telegram_session_string', value: sessionString },
+      update: { value: sessionString },
+    });
+
+    // Now connect properly
+    await this.connectWithSession(sessionString);
+
+    return { success: true, connected: this.isConnected };
   }
 
   getStatus() {
