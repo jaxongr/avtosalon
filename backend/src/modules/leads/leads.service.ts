@@ -16,10 +16,20 @@ export class LeadsService {
   }
 
   async isDuplicateToday(phone: string): Promise<boolean> {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    // Toshkent timezone (UTC+5) bo'yicha bugungi kunni hisoblash
+    const now = new Date();
+    const tashkentOffset = 5 * 60 * 60 * 1000; // +5 soat
+    const tashkentNow = new Date(now.getTime() + tashkentOffset);
+    const todayStart = new Date(Date.UTC(
+      tashkentNow.getUTCFullYear(),
+      tashkentNow.getUTCMonth(),
+      tashkentNow.getUTCDate(),
+    ));
+    // UTC ga qaytarish: Toshkent 00:00 = UTC 19:00 (oldingi kun)
+    const todayStartUTC = new Date(todayStart.getTime() - tashkentOffset);
+
     const exists = await this.prisma.lead.findFirst({
-      where: { phone, createdAt: { gte: todayStart } },
+      where: { phone, createdAt: { gte: todayStartUTC } },
     });
     return !!exists;
   }
@@ -66,11 +76,22 @@ export class LeadsService {
     });
   }
 
+  private getTodayStartUTC(): Date {
+    const now = new Date();
+    const tashkentOffset = 5 * 60 * 60 * 1000;
+    const tashkentNow = new Date(now.getTime() + tashkentOffset);
+    const todayStart = new Date(Date.UTC(
+      tashkentNow.getUTCFullYear(), tashkentNow.getUTCMonth(), tashkentNow.getUTCDate(),
+    ));
+    return new Date(todayStart.getTime() - tashkentOffset);
+  }
+
   async getStats() {
+    const todayStart = this.getTodayStartUTC();
     const [total, today, byBrand, byCity, byStatus] = await Promise.all([
       this.prisma.lead.count(),
       this.prisma.lead.count({
-        where: { createdAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+        where: { createdAt: { gte: todayStart } },
       }),
       this.prisma.lead.groupBy({ by: ['brand'], _count: true, orderBy: { _count: { brand: 'desc' } }, take: 15 }),
       this.prisma.lead.groupBy({ by: ['city'], _count: true, orderBy: { _count: { city: 'desc' } }, take: 15 }),
