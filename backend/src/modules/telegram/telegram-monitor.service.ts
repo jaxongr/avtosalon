@@ -127,7 +127,7 @@ export class TelegramMonitorService implements OnModuleInit {
     if (phones.length === 0) return;
 
     const mainPhone = phones[0];
-    const isDuplicate = await this.leadsService.isDuplicateToday(mainPhone);
+    const isDuplicate = await this.leadsService.isDuplicate(mainPhone);
     if (isDuplicate) return;
 
     this.logger.log(`LIVE [${group.title}] ${mainPhone} | ${parsed.brand || ''} ${parsed.model || ''}`);

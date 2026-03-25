@@ -78,7 +78,7 @@ export class TelegramScraperService {
             if (phones.length === 0) continue;
 
             const mainPhone = phones[0];
-            const isDuplicate = await this.leadsService.isDuplicateToday(mainPhone);
+            const isDuplicate = await this.leadsService.isDuplicate(mainPhone);
             if (isDuplicate) continue;
 
             let senderName: string | undefined;

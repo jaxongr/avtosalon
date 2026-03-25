@@ -15,11 +15,10 @@ export class LeadsService {
     return lead;
   }
 
-  async isDuplicateToday(phone: string): Promise<boolean> {
-    // Oxirgi 24 soatda shu raqam bormi
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  async isDuplicate(phone: string): Promise<boolean> {
+    // Shu raqam DB da bormi — umuman (hech qachon qayta olinmaydi)
     const exists = await this.prisma.lead.findFirst({
-      where: { phone, createdAt: { gte: since } },
+      where: { phone },
     });
     return !!exists;
   }
