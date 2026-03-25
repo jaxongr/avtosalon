@@ -16,20 +16,10 @@ export class LeadsService {
   }
 
   async isDuplicateToday(phone: string): Promise<boolean> {
-    // Toshkent timezone (UTC+5) bo'yicha bugungi kunni hisoblash
-    const now = new Date();
-    const tashkentOffset = 5 * 60 * 60 * 1000; // +5 soat
-    const tashkentNow = new Date(now.getTime() + tashkentOffset);
-    const todayStart = new Date(Date.UTC(
-      tashkentNow.getUTCFullYear(),
-      tashkentNow.getUTCMonth(),
-      tashkentNow.getUTCDate(),
-    ));
-    // UTC ga qaytarish: Toshkent 00:00 = UTC 19:00 (oldingi kun)
-    const todayStartUTC = new Date(todayStart.getTime() - tashkentOffset);
-
+    // Oxirgi 24 soatda shu raqam bormi
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const exists = await this.prisma.lead.findFirst({
-      where: { phone, createdAt: { gte: todayStartUTC } },
+      where: { phone, createdAt: { gte: since } },
     });
     return !!exists;
   }
