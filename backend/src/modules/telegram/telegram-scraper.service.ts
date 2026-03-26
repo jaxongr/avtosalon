@@ -61,10 +61,15 @@ export class TelegramScraperService {
             errorGroups++;
             continue;
           }
-          const messages = await client.getMessages(entity, {
-            limit: 100,
-            offsetDate,
-          });
+
+          // Faqat yangi xabarlarni olish — oxirgi ko'rilgan msg_id dan keyin
+          const msgParams: any = { limit: 50 };
+          if (group.lastMessageId) {
+            msgParams.minId = group.lastMessageId;
+          } else {
+            msgParams.offsetDate = offsetDate;
+          }
+          const messages = await client.getMessages(entity, msgParams);
 
           let groupLeads = 0;
           for (const msg of messages) {
@@ -121,6 +126,11 @@ export class TelegramScraperService {
             } catch {}
           }
 
+          // Eng yangi msg_id ni saqlash — keyingi scrape faqat bundan keyingilarni oladi
+          if (messages.length > 0) {
+            const maxMsgId = Math.max(...messages.map(m => m.id));
+            await this.groupsService.updateLastMessage(group.telegramId, maxMsgId);
+          }
           await this.groupsService.updateLastScraped(group.telegramId);
           totalLeads += groupLeads;
           processedGroups++;
