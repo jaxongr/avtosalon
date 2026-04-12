@@ -38,10 +38,21 @@ export function isCarAd(text: string, parsed: ParsedCarData | null): boolean {
   const lower = text.toLowerCase()
     .replace(/[\u02BB\u02BC\u2018\u2019\u0060\u00B4]/g, "'");
 
-  // Uy-joy/chorva e'lonlari — mashina modeli topilgan bo'lsa ham filtrlash
+  // Uy-joy/chorva e'lonlari
   const hasRealEstate = REAL_ESTATE_KEYWORDS.some(kw => lower.includes(kw));
   const hasLivestock = LIVESTOCK_KEYWORDS.some(kw => lower.includes(kw));
   if (hasRealEstate || hasLivestock) return false;
+
+  // Taksi/pochta/xizmat e'lonlari — mashina emas
+  const SERVICE_KEYWORDS = [
+    'ketamiz', 'кетамиз', 'yuraman', 'юраман',
+    'pochta olamiz', 'почта оламиз', 'pochta olaman',
+    'tunikafon', 'тоникафон', 'tonirovka xizmati',
+    'akkumlyator sotiladi', 'аккумлятор сотилади',
+    'zapchast sotiladi', 'запчаст сотилади',
+  ];
+  const isService = SERVICE_KEYWORDS.some(kw => lower.includes(kw));
+  if (isService) return false;
 
   return true;
 }
