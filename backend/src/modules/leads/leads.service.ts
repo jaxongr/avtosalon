@@ -16,10 +16,18 @@ export class LeadsService {
   }
 
   async isDuplicate(phone: string): Promise<boolean> {
-    // Shu raqam umuman DB da bormi — bir marta olingan raqam qayta olinmaydi
-    // Scrape faqat yangi xabarlarni o'qiydi (msg_id bo'yicha)
+    // Shu raqam bugun (Toshkent) allaqachon olinganmi
+    // Ertasi kun yana olinishi mumkin (yangi e'lon)
+    const tashkentOffset = 5 * 60 * 60 * 1000;
+    const now = new Date();
+    const tashkentNow = new Date(now.getTime() + tashkentOffset);
+    const todayStart = new Date(Date.UTC(
+      tashkentNow.getUTCFullYear(), tashkentNow.getUTCMonth(), tashkentNow.getUTCDate(),
+    ));
+    const todayStartUTC = new Date(todayStart.getTime() - tashkentOffset);
+
     const exists = await this.prisma.lead.findFirst({
-      where: { phone },
+      where: { phone, createdAt: { gte: todayStartUTC } },
       select: { id: true },
     });
     return !!exists;

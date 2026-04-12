@@ -62,14 +62,11 @@ export class TelegramScraperService {
             continue;
           }
 
-          // Faqat yangi xabarlarni olish — oxirgi ko'rilgan msg_id dan keyin
-          const msgParams: any = { limit: 50 };
-          if (group.lastMessageId) {
-            msgParams.minId = group.lastMessageId;
-          } else {
-            msgParams.offsetDate = offsetDate;
-          }
-          const messages = await client.getMessages(entity, msgParams);
+          // Har doim offsetDate ishlatish — minId gramjs da ishonchsiz
+          const messages = await client.getMessages(entity, {
+            limit: 50,
+            offsetDate,
+          });
 
           let groupLeads = 0;
           for (const msg of messages) {
