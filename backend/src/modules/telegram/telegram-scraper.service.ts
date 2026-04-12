@@ -27,7 +27,7 @@ export class TelegramScraperService {
    */
   @Cron('* * * * *')
   async periodicScrape() {
-    await this.scrape(5); // oxirgi 5 daqiqa, har daqiqa tekshirish
+    await this.scrape(10); // oxirgi 10 daqiqa, har daqiqa tekshirish
   }
 
   async scrape(minutes: number = 15) {
@@ -46,10 +46,10 @@ export class TelegramScraperService {
     let errorGroups = 0;
 
     try {
-      const offsetDate = Math.floor(Date.now() / 1000) - (minutes * 60);
+      // Oxirgi N daqiqadagi xabarlarni olish uchun cutoff vaqt
+      const cutoffTime = Math.floor(Date.now() / 1000) - (minutes * 60);
 
       for (const group of groups) {
-        // 5 daqiqadan oshsa — to'xtatish (stuck bo'lmasligi uchun)
         if (Date.now() - startTime > 5 * 60 * 1000) {
           this.logger.warn(`Scrape timeout after 5 min, processed ${processedGroups}/${groups.length} groups`);
           break;
@@ -62,14 +62,14 @@ export class TelegramScraperService {
             continue;
           }
 
-          // Har doim offsetDate ishlatish — minId gramjs da ishonchsiz
-          const messages = await client.getMessages(entity, {
-            limit: 50,
-            offsetDate,
-          });
+          // Oxirgi 30 ta xabarni olish (vaqt bo'yicha emas, son bo'yicha)
+          const messages = await client.getMessages(entity, { limit: 30 });
 
           let groupLeads = 0;
           for (const msg of messages) {
+            // Faqat cutoff vaqtidan keyingi xabarlarni qayta ishlash
+            if (msg.date && msg.date < cutoffTime) continue;
+
             const text = msg.text || msg.message || '';
             if (!text) continue;
 
