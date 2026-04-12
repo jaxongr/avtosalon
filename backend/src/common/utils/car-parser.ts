@@ -564,23 +564,31 @@ function parsePrice(text: string): { amount: number | null; currency: 'USD' | 'U
     if (num > 0) return { amount: num, currency: 'USD' };
   }
 
-  // UZS / million patterns
-  const uzsPatterns = [
+  // UZS million patterns — 120 mln = 120,000,000 so'm
+  const mlnPatterns = [
     /(\d[\d\s,.]*)[\s]*(?:mln|млн|million|milyon|милион|милен|миллион)/i,
+    /(\d+)\s*mil(?:lion|yon)?/i,
+  ];
+  for (const p of mlnPatterns) {
+    const m = text.match(p);
+    if (m) {
+      const raw = m[1].replace(/[\s,]/g, '').replace(/\.(?=\d{3})/g, '');
+      const num = parseFloat(raw);
+      if (num > 0) return { amount: num * 1000000, currency: 'UZS' };
+    }
+  }
+
+  // UZS so'm patterns — 40.000.000 so'm
+  const somPatterns = [
     /(\d[\d\s,.]*)\s*(?:so'm|сўм|сум|sum|uzs)/i,
   ];
-  for (const p of uzsPatterns) {
+  for (const p of somPatterns) {
     const m = text.match(p);
     if (m) {
       const raw = m[1].replace(/[\s]/g, '').replace(/[,.]/g, '');
       const num = parseFloat(raw);
       if (num > 0) return { amount: num, currency: 'UZS' };
     }
-  }
-
-  const mlnMatch = text.toLowerCase().match(/(\d+)\s*mil/);
-  if (mlnMatch) {
-    return { amount: parseInt(mlnMatch[1]), currency: 'UZS' };
   }
 
   // Narxi: 135.000.000 yoki 135,000,000 (valyutasiz katta raqam = UZS)
